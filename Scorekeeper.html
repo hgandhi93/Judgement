@@ -1,0 +1,1226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Judgment Scorekeeper</title>
+  <style>
+    /* Mobile-first responsive design */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-size: 16px;
+      line-height: 1.5;
+      color: #e8f0ff;
+      min-height: 100vh;
+      position: relative;
+      background: #0a0e1a;
+    }
+
+    .canvas-bg { position: fixed; inset: 0; z-index: -1; pointer-events: none; }
+
+    .container { max-width: 1200px; margin: 0 auto; padding: 10px 10px 80px; }
+
+    .header, .panel {
+      background: rgba(16, 24, 48, 0.6);
+      backdrop-filter: blur(14px);
+      border: 1px solid rgba(120, 200, 255, 0.2);
+      border-radius: 20px;
+      box-shadow: 0 12px 28px rgba(0,0,0,0.35), inset 0 0 40px rgba(64, 224, 255, 0.05);
+    }
+
+    .header { padding: 20px; margin-bottom: 20px; text-align: center; }
+
+    .logo {
+      width: 64px; height: 64px; margin: 0 auto 10px; display: block;
+      filter: drop-shadow(0 6px 12px rgba(0,255,234,0.4));
+    }
+
+    h1 {
+      font-size: 28px; margin-bottom: 8px; color: #e8f0ff; font-weight: 800;
+      text-shadow: 0 2px 20px rgba(0, 255, 234, 0.25);
+    }
+
+    .credit { font-size: 14px; color: rgba(200, 230, 255, 0.85); margin-top: 8px; }
+
+    .bg-toggle { margin-top: 10px; }
+    .bg-toggle label { color: rgba(220, 240, 255, 0.9); font-weight: 500; }
+    .bg-toggle input { margin-right: 8px; }
+
+    .panel { padding: 25px; margin-bottom: 20px; }
+    .panel h2 { font-size: 22px; margin-bottom: 18px; color: #e8f0ff; font-weight: 700; }
+    .panel h3 { font-size: 18px; margin-bottom: 12px; color: #e8f0ff; font-weight: 600; }
+
+    .player-list { margin-bottom: 16px; }
+    .player-row { display: flex; gap: 10px; margin-bottom: 12px; align-items: center; }
+
+    .player-input {
+      flex: 1; padding: 14px 16px; border: 2px solid rgba(120, 200, 255, 0.3);
+      border-radius: 12px; font-size: 16px; background: rgba(10, 20, 40, 0.6); color: #e8f0ff;
+      transition: all .25s ease;
+    }
+    .player-input::placeholder { color: rgba(200, 220, 255, 0.6); }
+    .player-input:focus {
+      outline: none; border-color: #36d1dc;
+      box-shadow: 0 0 0 3px rgba(54, 209, 220, 0.25), inset 0 0 20px rgba(54, 209, 220, 0.12);
+    }
+
+    .btn {
+      background: linear-gradient(135deg, #36d1dc 0%, #5b86e5 100%);
+      color: #041120; border: none; padding: 14px 20px; border-radius: 12px;
+      font-size: 16px; font-weight: 800; cursor: pointer; min-height: 48px;
+      transition: transform .15s ease, box-shadow .15s ease, filter .15s ease;
+      text-transform: uppercase; letter-spacing: .4px;
+      box-shadow: 0 8px 24px rgba(54, 209, 220, .35);
+    }
+    .btn:hover { transform: translateY(-2px); box-shadow: 0 12px 28px rgba(54, 209, 220, .5); }
+    .btn:active { transform: translateY(0); }
+    .btn:disabled {
+      background: linear-gradient(135deg, #5a6a8a, #94a3b8);
+      color: #1a2233; cursor: not-allowed; box-shadow: none;
+    }
+
+    .btn-danger {
+      background: linear-gradient(135deg, #ff6b6b 0%, #ff3b3b 100%);
+      color: #fff; box-shadow: 0 8px 24px rgba(255, 85, 85, .35);
+    }
+    .btn-warning {
+      background: linear-gradient(135deg, #ffcc33 0%, #ff9966 100%);
+      color: #2a0e00; box-shadow: 0 8px 24px rgba(255, 170, 51, .35);
+    }
+    .btn-small { padding: 10px 16px; font-size: 14px; min-height: auto; }
+
+    .options { display: grid; gap: 16px; }
+    .option-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .option-row label { color: #e8f0ff; font-weight: 600; }
+    .option-row select, .option-row input[type="number"] {
+      padding: 10px 12px; border: 2px solid rgba(120, 200, 255, 0.3); border-radius: 8px;
+      background: rgba(10, 20, 40, 0.6); color: #e8f0ff;
+    }
+    .option-row input[type="checkbox"] { width: 18px; height: 18px; margin-right: 8px; }
+
+    .info-btn {
+      width: 28px; height: 28px; border-radius: 50%; background: rgba(54, 209, 220, 0.15);
+      border: 2px solid rgba(120, 200, 255, 0.4); font-size: 14px; font-weight: 900; cursor: pointer;
+      display: inline-flex; align-items: center; justify-content: center; color: #b9ecff;
+      transition: transform .15s ease, background .15s ease;
+    }
+    .info-btn:hover { transform: scale(1.08); background: rgba(54, 209, 220, 0.25); }
+
+    .round-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; gap: 14px; flex-wrap: wrap; }
+
+    .round-pill {
+      background: linear-gradient(135deg, #5b86e5, #36d1dc);
+      color: #041120; padding: 12px 18px; border-radius: 999px; font-weight: 900; font-size: 16px;
+      box-shadow: 0 8px 24px rgba(91, 134, 229, .35);
+    }
+
+    .trump-badge {
+      display: flex; align-items: center; gap: 10px; background: rgba(10, 20, 40, 0.6);
+      padding: 10px 14px; border-radius: 14px; border: 2px solid; font-weight: 800;
+    }
+    .trump-spade { border-color: #9ad1ff; color: #9ad1ff; }
+    .trump-diamond { border-color: #ff8ea1; color: #ff8ea1; }
+    .trump-club { border-color: #9ad1ff; color: #9ad1ff; }
+    .trump-heart { border-color: #ff8ea1; color: #ff8ea1; }
+    .trump-notrump { border-color: #c0a8ff; color: #c0a8ff; }
+
+    .suit-icon { width: 24px; height: 24px; }
+
+    .predictions-grid, .haths-grid { display: grid; gap: 14px; margin-bottom: 18px; }
+
+    .grid-item {
+      background: rgba(10, 20, 40, 0.6); padding: 14px; border-radius: 14px; text-align: center;
+      border: 2px solid rgba(120, 200, 255, 0.2); transition: border-color .2s ease, box-shadow .2s ease;
+    }
+    .grid-item:hover { border-color: rgba(120,200,255,0.45); box-shadow: inset 0 0 30px rgba(64, 224, 255, 0.06); }
+    .grid-item label { display: block; font-weight: 800; margin-bottom: 10px; font-size: 16px; color: #e8f0ff; }
+
+    .prediction-controls, .hath-controls { display: flex; align-items: center; justify-content: center; gap: 10px; }
+    .prediction-btn, .hath-btn {
+      width: 42px; height: 42px; border: none;
+      background: radial-gradient(circle at 30% 30%, #36d1dc, #5b86e5);
+      color: #041120; border-radius: 50%; font-size: 22px; font-weight: 900; cursor: pointer;
+      display: inline-flex; align-items: center; justify-content: center;
+      transition: transform .1s ease, box-shadow .1s ease;
+      box-shadow: 0 10px 20px rgba(54, 209, 220, 0.35), inset 0 -6px 12px rgba(0,0,0,0.25);
+    }
+    .prediction-btn:hover, .hath-btn:hover { transform: scale(1.08); }
+    .prediction-btn:active, .hath-btn:active { transform: scale(0.95); }
+
+    .prediction-display {
+      width: 64px; height: 64px; border: 3px solid rgba(120,200,255,0.35);
+      border-radius: 50%; background: rgba(10, 20, 40, 0.7);
+      display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 900; color: #e8f0ff;
+      box-shadow: inset 0 0 16px rgba(64, 224, 255, 0.08);
+    }
+
+    .grid-item input {
+      width: 100%; padding: 10px; border: 2px solid rgba(120,200,255,0.3); border-radius: 8px;
+      text-align: center; font-size: 18px; background: rgba(10, 20, 40, 0.6); color: #e8f0ff;
+    }
+
+    .sum-display {
+      background: rgba(56, 178, 172, 0.16); border: 2px solid #38b2ac; color: #e8fff8;
+      font-weight: 800; padding: 12px; border-radius: 12px; text-align: center; margin-bottom: 14px; font-size: 16px;
+    }
+
+    .hath-input {
+      width: 74px; height: 50px; text-align: center; font-size: 20px; font-weight: 800;
+      background: rgba(10, 20, 40, 0.6); border: 2px solid rgba(120,200,255,0.3); border-radius: 10px; color: #e8f0ff;
+    }
+
+    .scoreboard-table { width: 100%; border-collapse: collapse; font-size: 14px; background: rgba(10, 20, 40, 0.6); border-radius: 14px; overflow: hidden; }
+    .scoreboard-table th, .scoreboard-table td {
+      padding: 12px 8px; text-align: center; border-bottom: 1px solid rgba(120,200,255,0.2); color: #e8f0ff;
+    }
+    .scoreboard-table th { background: rgba(120,200,255,0.15); font-weight: 900; position: sticky; top: 0; }
+
+    .mini-scoreboard { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(10, 20, 40, 0.6); backdrop-filter: blur(12px); padding: 12px; border-top: 1px solid rgba(120,200,255,0.2); display: none; z-index: 100; }
+
+    .history-item {
+      background: rgba(10, 20, 40, 0.6); padding: 16px; border-radius: 14px; margin-bottom: 10px;
+      display: flex; justify-content: space-between; align-items: center; border: 1px solid rgba(120,200,255,0.2);
+    }
+
+    .qr-container { text-align: center; padding: 20px; color: #e8f0ff; }
+    .qr-container img { background: white; padding: 12px; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,.35); }
+
+    .modal { position: fixed; inset: 0; background: rgba(0, 6, 20, 0.68); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 20px; backdrop-filter: blur(5px); }
+    .modal-content {
+      background: rgba(230, 245, 255, 0.98); border-radius: 20px; padding: 26px; max-width: 520px; width: 100%;
+      max-height: 90vh; overflow-y: auto; box-shadow: 0 24px 48px rgba(0,0,0,0.4); color: #0a1730;
+    }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+    .modal-close { background: none; border: none; font-size: 28px; cursor: pointer; color: #334155; padding: 5px; }
+    .modal-close:hover { color: #0f172a; }
+
+    .toast {
+      position: fixed; top: 20px; right: 20px; background: linear-gradient(135deg, #48bb78, #38a169);
+      color: white; padding: 14px 18px; border-radius: 12px; z-index: 1001; animation: slideIn .3s ease-out;
+      box-shadow: 0 10px 28px rgba(72, 187, 120, 0.35); font-weight: 700;
+    }
+    .toast.error { background: linear-gradient(135deg, #e53e3e, #c53030); box-shadow: 0 10px 28px rgba(229, 62, 62, 0.35); }
+    .toast.warning { background: linear-gradient(135deg, #ed8936, #dd6b20); box-shadow: 0 10px 28px rgba(237, 137, 54, 0.35); }
+    @keyframes slideIn { from { transform: translateX(100%);} to { transform: translateX(0);} }
+
+    .warning-text {
+      color: #ffd700; font-weight: 800; background: rgba(255, 215, 0, 0.18);
+      padding: 10px; border-radius: 10px; margin-bottom: 12px; border: 1px solid rgba(255, 215, 0, 0.28);
+    }
+
+    .footer { text-align: center; padding: 22px; color: rgba(200, 230, 255, 0.8); font-size: 16px; font-weight: 600; }
+
+    /* Responsive grids */
+    @media (min-width: 768px) {
+      .predictions-grid, .haths-grid { grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); }
+      .container { padding: 20px; }
+    }
+    @media (min-width: 1024px) {
+      .predictions-grid, .haths-grid { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+    }
+
+    /* Hide sections initially */
+    .panel:not(.setup-panel) { display: none; }
+    .show { display: block !important; }
+
+    /* Accessibility */
+    @media (prefers-reduced-motion: reduce) {
+      .canvas-bg { display: none !important; }
+      body { background: #0a0e1a; }
+    }
+
+    /* Medal badges */
+    .medal { font-size: 18px; }
+  </style>
+</head>
+<body>
+  <!-- Futuristic Cartoon Background (neon grid + floaters) -->
+  <canvas class="canvas-bg" id="bgCanvas"></canvas>
+
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <!-- Updated Logo (SVG image) -->
+      <img
+        class="logo"
+        alt="Judgment Logo"
+        src='data:image/svg+xml;utf8,<?xml version="1.0" encoding="UTF-8"?><svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="%2336d1dc"/><stop offset="1" stop-color="%235b86e5"/></linearGradient><radialGradient id="r" cx="50%" cy="35%" r="70%"><stop offset="0" stop-color="%23e6fffb"/><stop offset="1" stop-color="%230a0e1a"/></radialGradient></defs><circle cx="64" cy="64" r="60" fill="url(%23r)" stroke="%2364e8ff" stroke-width="3"/><g transform="translate(64 60)" fill="none" stroke="url(%23g)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"><path d="M-28 6 h56"/><path d="M-20 -8 h40"/><path d="M-12 20 h24"/></g><g transform="translate(64 88)" fill="%23ffd54d" stroke="%23ffb300" stroke-width="2"><path d="M0 -30 l9 9 13 2 -9 9 2 13 -15 -7 -15 7 2 -13 -9 -9 13 -2z"/></g><text x="64" y="40" text-anchor="middle" font-family="Verdana" font-weight="700" font-size="18" fill="%23e8f0ff">JUDGMENT</text></svg>'/>
+      <h1>Judgment Scorekeeper</h1>
+      <div class="bg-toggle">
+        <label><input type="checkbox" id="bgToggle" checked /> Animated Background</label>
+      </div>
+      <div class="credit">Created by Harsh G • Neon Edition</div>
+    </div>
+
+    <!-- Setup Panel -->
+    <div class="panel setup-panel">
+      <h2>🎮 Game Setup</h2>
+
+      <div class="player-list">
+        <h3>Players (3-20)</h3>
+        <div id="playersContainer"></div>
+        <button class="btn" id="addPlayerBtn">➕ Add Player</button>
+      </div>
+
+      <div class="options">
+        <div class="option-row">
+          <label for="numDecks">Number of Decks:</label>
+          <input type="number" id="numDecks" min="1" max="4" value="1" />
+          <button class="info-btn" data-info="numDecks">i</button>
+        </div>
+
+        <div class="option-row">
+          <label for="missPenalty">Miss Penalty:</label>
+          <select id="missPenalty">
+            <option value="zero">Zero Points</option>
+            <option value="difference">Minus Difference</option>
+          </select>
+          <button class="info-btn" data-info="missPenalty">i</button>
+        </div>
+
+        <div class="option-row">
+          <label><input type="checkbox" id="allowEqualPredictions" /> Allow Equal Predictions</label>
+          <button class="info-btn" data-info="allowEqual">i</button>
+        </div>
+
+        <div class="option-row">
+          <label><input type="checkbox" id="streakBonus" checked /> Streak Bonus</label>
+          <button class="info-btn" data-info="streakBonus">i</button>
+        </div>
+
+        <!-- NEW: Scoring mode radios (keep everything else the same) -->
+        <div class="option-row" id="scoringModeRow">
+          <label>Scoring:</label>
+          <label><input type="radio" name="scoringMode" value="classic" checked /> Classic (10 + won)</label>
+          <label><input type="radio" name="scoringMode" value="alt" /> Alternative (0→10, 1→21, 2→22…)</label>
+        </div>
+      </div>
+
+      <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:10px;">
+        <button class="btn" id="startGameBtn">🚀 Start Game</button>
+        <button class="btn btn-danger" id="resetGameBtn">🔄 Reset Game</button>
+        <button class="btn btn-warning" id="endGameBtn">🏁 End Game</button>
+      </div>
+    </div>
+
+    <!-- Round Panel -->
+    <div class="panel round-panel">
+      <div class="round-header">
+        <div class="round-pill" id="roundPill">Round 1 • 1 cards</div>
+        <div class="trump-badge" id="trumpBadge">
+          <svg class="suit-icon" id="trumpIcon" viewBox="0 0 24 24"></svg>
+          <span id="trumpLabel"></span>
+        </div>
+      </div>
+
+      <div id="warningText"></div>
+
+      <h3>📝 Predictions</h3>
+      <div class="sum-display" id="predictionSum">Sum: 0 / 1</div>
+      <div class="predictions-grid" id="predictionsGrid"></div>
+      <button class="btn" id="confirmPredictionsBtn">✅ Confirm Predictions</button>
+
+      <div id="hathsSection" style="display: none;">
+        <h3>🏆 Tricks Won (Hath)</h3>
+        <div class="sum-display" id="hathSum">Sum: 0 / 1</div>
+        <div class="haths-grid" id="hathsGrid"></div>
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+          <button class="btn" id="closeRoundBtn" disabled>🎯 Close Round</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Scoreboard Panel -->
+    <div class="panel scoreboard-panel">
+      <h2>📊 Scoreboard</h2>
+      <div style="overflow-x: auto;">
+        <table class="scoreboard-table" id="scoreboardTable">
+          <thead>
+            <tr>
+              <th>Rank</th>
+              <th>Player</th>
+              <th>Bid</th>
+              <th>Won</th>
+              <th>Pts</th>
+              <th>Streak</th>
+              <th>Total</th>
+            </tr>
+          </thead>
+          <tbody id="scoreboardBody"></tbody>
+        </table>
+      </div>
+      <button class="btn btn-warning" id="undoRoundBtn" style="margin-top: 15px; display: none;">↩️ Undo Last Round</button>
+    </div>
+
+    <!-- History Panel -->
+    <div class="panel history-panel">
+      <h2>📚 Game History</h2>
+      <div id="historyContainer">
+        <p style="color: rgba(220,240,255,0.8);">No rounds played yet.</p>
+      </div>
+    </div>
+
+    <!-- Share Panel -->
+    <div class="panel share-panel">
+      <h2>📱 Share Game</h2>
+      <div class="qr-container">
+        <div id="qrCode"></div>
+        <p style="margin-top: 12px;">Scan QR code to join on mobile</p>
+        <p style="font-size: 14px; margin-top: 8px; opacity: 0.8;">Or share this URL with other players</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mini Scoreboard -->
+  <div class="mini-scoreboard" id="miniScoreboard"></div>
+
+  <!-- Footer -->
+  <div class="footer">Created by Harsh G • Neon Edition</div>
+
+  <!-- Modal -->
+  <div class="modal" id="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="modalTitle">Info</h3>
+        <button class="modal-close" id="modalClose">&times;</button>
+      </div>
+      <div id="modalBody"></div>
+      <button class="btn" id="modalOk">OK</button>
+    </div>
+  </div>
+
+  <!-- QR Code Library (kept) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode/1.5.3/qrcode.min.js"></script>
+
+  <script>
+    // ===== Game State =====
+    let gameState = {
+      players: [],
+      rules: {
+        numDecks: 1,
+        missPenalty: 'zero',
+        allowEqualPredictions: false,
+        streakBonus: true,
+        streakStep: 5,
+        bonusPoints: 10,
+        scoringMode: 'classic' // 'classic' or 'alt'
+      },
+      roundIndex: 0,
+      maxCards: 1,
+      currentCardCount: 1,
+      cycleDirection: 1,
+      trumpIndex: 0,
+      rounds: [],
+      currentBids: [],
+      currentWon: [],
+      // NEW: live streak counters (reset to 0 after awarding bonus at 5)
+      streakCounters: [],
+      gameEnded: false
+    };
+
+    // ===== Constants =====
+    const TRUMP_NAMES = ['spade', 'diamond', 'club', 'heart', 'notrump'];
+    const TRUMP_LABELS = {
+      spade: '♠ Spade (Kadi)',
+      diamond: '♦ Diamond (Charkat)',
+      club: '♣ Club (Fallai)',
+      heart: '♥ Heart (Laal)',
+      notrump: '🚫 No Trump'
+    };
+
+    document.addEventListener('DOMContentLoaded', init);
+
+    function init() {
+      loadGameState();
+      setupEventListeners();
+      setupBackground();
+      updateUI();
+      generateQR();
+    }
+
+    function setupEventListeners() {
+      // Setup panel
+      document.getElementById('addPlayerBtn').addEventListener('click', addPlayer);
+      document.getElementById('startGameBtn').addEventListener('click', startGame);
+      document.getElementById('resetGameBtn').addEventListener('click', resetGame);
+
+      // Options
+      document.getElementById('numDecks').addEventListener('change', updateRules);
+      document.getElementById('missPenalty').addEventListener('change', updateRules);
+      document.getElementById('allowEqualPredictions').addEventListener('change', updateRules);
+      document.getElementById('streakBonus').addEventListener('change', updateRules);
+
+      // NEW: scoring mode radios
+      document.getElementsByName('scoringMode').forEach?.(r => {
+        r.addEventListener('change', () => {
+          if (r.checked) {
+            gameState.rules.scoringMode = r.value;
+            saveGameState();
+          }
+        });
+      });
+
+      // Round panel
+      document.getElementById('confirmPredictionsBtn').addEventListener('click', confirmPredictions);
+      document.getElementById('closeRoundBtn').addEventListener('click', closeRound);
+      document.getElementById('undoRoundBtn').addEventListener('click', undoLastRound);
+
+      // End Game (next to Reset)
+      document.getElementById('endGameBtn').addEventListener('click', endGamePrompt);
+
+      // Background toggle
+      document.getElementById('bgToggle').addEventListener('change', toggleBackground);
+
+      // Info buttons
+      document.querySelectorAll('.info-btn').forEach(btn => btn.addEventListener('click', showInfo));
+
+      // Modal
+      document.getElementById('modalClose').addEventListener('click', closeModal);
+      document.getElementById('modalOk').addEventListener('click', closeModal);
+      document.getElementById('modal').addEventListener('click', (e) => { if (e.target.id === 'modal') closeModal(); });
+
+      // Add initial players if empty
+      if (gameState.players.length === 0) { for (let i = 0; i < 3; i++) addPlayer(); }
+
+      // Reflect saved scoring mode radios
+      setScoringModeRadios(gameState.rules.scoringMode || 'classic');
+    }
+
+    function setScoringModeRadios(mode) {
+      const radios = document.getElementsByName('scoringMode');
+      for (const r of radios) { r.checked = (r.value === mode); }
+    }
+
+    // ===== Players =====
+    function addPlayer() {
+      if (gameState.players.length >= 20) { showToast('Maximum 20 players allowed', 'error'); return; }
+      const player = { id: `p${Date.now()}_${Math.random().toString(36).substr(2, 9)}`, name: '' };
+      gameState.players.push(player);
+      renderPlayers();
+    }
+
+    function removePlayer(playerId) {
+      if (gameState.players.length <= 3) { showToast('Minimum 3 players required', 'error'); return; }
+      gameState.players = gameState.players.filter(p => p.id !== playerId);
+      renderPlayers();
+    }
+
+    function renderPlayers() {
+      const container = document.getElementById('playersContainer');
+      container.innerHTML = '';
+
+      gameState.players.forEach((player, index) => {
+        const row = document.createElement('div');
+        row.className = 'player-row';
+        row.innerHTML = `
+          <input type="text" class="player-input" placeholder="Player ${index + 1}"
+                 value="${player.name}" data-player-id="${player.id}">
+          <button class="btn btn-danger btn-small" onclick="removePlayer('${player.id}')">Remove</button>
+        `;
+        container.appendChild(row);
+
+        const input = row.querySelector('input');
+        input.addEventListener('input', (e) => {
+          player.name = e.target.value.trim();
+          saveGameState();
+        });
+      });
+    }
+
+    // ===== Rules =====
+    function updateRules() {
+      gameState.rules.numDecks = parseInt(document.getElementById('numDecks').value) || 1;
+      gameState.rules.missPenalty = document.getElementById('missPenalty').value;
+      gameState.rules.allowEqualPredictions = document.getElementById('allowEqualPredictions').checked;
+      gameState.rules.streakBonus = document.getElementById('streakBonus').checked;
+
+      // scoring mode radios already update rules on change
+      saveGameState();
+    }
+
+    // ===== Reset / Start =====
+    function resetGame() {
+      if (confirm('⚠️ Reset the entire game? All scores and history will be erased.')) {
+        const keepScoringMode = gameState.rules.scoringMode || 'classic';
+        const keepStreakBonus = gameState.rules.streakBonus !== false;
+        const keepMissPenalty = gameState.rules.missPenalty || 'zero';
+        const keepAllowEqual = !!gameState.rules.allowEqualPredictions;
+        const keepNumDecks = gameState.rules.numDecks || 1;
+
+        gameState = {
+          players: [],
+          rules: {
+            numDecks: keepNumDecks,
+            missPenalty: keepMissPenalty,
+            allowEqualPredictions: keepAllowEqual,
+            streakBonus: keepStreakBonus,
+            streakStep: 5,
+            bonusPoints: 10,
+            scoringMode: keepScoringMode
+          },
+          roundIndex: 0,
+          maxCards: 1,
+          currentCardCount: 1,
+          cycleDirection: 1,
+          trumpIndex: 0,
+          rounds: [],
+          currentBids: [],
+          currentWon: [],
+          streakCounters: [],
+          gameEnded: false
+        };
+
+        // Reset form values (preserve toggles)
+        document.getElementById('numDecks').value = gameState.rules.numDecks;
+        document.getElementById('missPenalty').value = gameState.rules.missPenalty;
+        document.getElementById('allowEqualPredictions').checked = gameState.rules.allowEqualPredictions;
+        document.getElementById('streakBonus').checked = gameState.rules.streakBonus;
+        setScoringModeRadios(gameState.rules.scoringMode);
+
+        for (let i = 0; i < 3; i++) addPlayer();
+
+        saveGameState();
+        showPanel('setup-panel');
+        showToast('Game reset', 'warning');
+      }
+    }
+
+    function startGame() {
+      // Validate players
+      const validPlayers = gameState.players.filter(p => p.name.length > 0);
+      if (validPlayers.length < 3) { showToast('At least 3 players with names required', 'error'); return; }
+
+      // Unique names
+      const names = validPlayers.map(p => p.name.toLowerCase());
+      if (new Set(names).size !== names.length) { showToast('Player names must be unique', 'error'); return; }
+
+      gameState.players = validPlayers;
+
+      // Compute maxCards based on decks and player count
+      const totalCards = 52 * gameState.rules.numDecks;
+      gameState.maxCards = Math.max(1, Math.floor(totalCards / gameState.players.length));
+
+      // Initialize cycling state
+      gameState.roundIndex = 0;
+      gameState.currentCardCount = 1;   // start at 1
+      gameState.cycleDirection = 1;     // go up
+      gameState.trumpIndex = 0;
+      gameState.rounds = [];
+      gameState.currentBids = new Array(gameState.players.length).fill(0);
+      gameState.currentWon = new Array(gameState.players.length).fill(0);
+      gameState.streakCounters = new Array(gameState.players.length).fill(0);
+      gameState.gameEnded = false;
+
+      saveGameState();
+      updateUI();
+      showPanel('round-panel');
+      showToast('Game started!', 'success');
+    }
+
+    // ===== Panels =====
+    function showPanel(panelClass) {
+      document.querySelectorAll('.panel').forEach(p => p.classList.remove('show'));
+      document.querySelector(`.${panelClass}`).classList.add('show');
+
+      if (panelClass !== 'setup-panel') {
+        document.querySelector('.scoreboard-panel').classList.add('show');
+        document.querySelector('.history-panel').classList.add('show');
+        document.querySelector('.share-panel').classList.add('show');
+      }
+    }
+
+    function updateUI() {
+      if (gameState.players.length === 0) return;
+
+      updateRoundUI();
+      updateScoreboard();
+      updateHistory();
+      updateMiniScoreboard();
+    }
+
+    // ===== Round UI =====
+    function updateRoundUI() {
+      const cardCount = getCurrentCardCount();
+      const trump = TRUMP_NAMES[gameState.trumpIndex % 5];
+
+      // Header
+      document.getElementById('roundPill').textContent = `Round ${gameState.roundIndex + 1} • ${cardCount} cards`;
+
+      const trumpBadge = document.getElementById('trumpBadge');
+      trumpBadge.className = `trump-badge trump-${trump}`;
+      document.getElementById('trumpLabel').textContent = TRUMP_LABELS[trump];
+
+      updateTrumpIcon(trump);
+      checkStreakWarnings();
+      updatePredictionsGrid();
+      updateHathsGrid();
+    }
+
+    function updateTrumpIcon(trump) {
+      const icon = document.getElementById('trumpIcon');
+      const paths = {
+        spade: 'M12 2l3.09 6.26L22 9l-5 4.87L18.18 22 12 18.77 5.82 22 7 13.87 2 9l6.91-.74L12 2z',
+        diamond: 'M12 2l4.5 6.5L22 12l-5.5 4-4.5 6.5L7.5 16 2 12l4.5-6.5L12 2z',
+        club: 'M12 2C9.5 2 7.5 4 7.5 6.5c0 1.58.81 2.97 2.06 3.81-.25.44-.56.86-.56 1.69 0 2.25 2.25 4 5 4s5-1.75 5-4c0-.83-.31-1.25-.56-1.69C19.69 9.47 20.5 8.08 20.5 6.5 20.5 4 18.5 2 16 2c-1 0-1.88.38-2.56 1C12.88 2.38 12 2 12 2z',
+        heart: 'M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z',
+        notrump: 'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z'
+      };
+      icon.innerHTML = `<path d="${paths[trump]}" fill="currentColor"/>`;
+    }
+
+    function checkStreakWarnings() {
+      if (!gameState.rules.streakBonus) { document.getElementById('warningText').innerHTML=''; return; }
+
+      const warnings = [];
+      const streaks = gameState.streakCounters?.length ? gameState.streakCounters : calculateCurrentStreaks();
+
+      streaks.forEach((streak, i) => {
+        if (streak === gameState.rules.streakStep - 1) {
+          warnings.push(`${gameState.players[i].name} is 1 away from +${gameState.rules.bonusPoints} bonus`);
+        }
+      });
+
+      const warningEl = document.getElementById('warningText');
+      warningEl.innerHTML = warnings.length
+        ? warnings.map(w => `<div class="warning-text">⚡ ${w}</div>`).join('')
+        : '';
+    }
+
+    function updatePredictionsGrid() {
+      const grid = document.getElementById('predictionsGrid');
+      grid.innerHTML = '';
+      gameState.players.forEach((player, i) => {
+        const item = document.createElement('div');
+        item.className = 'grid-item';
+        item.innerHTML = `
+          <label>${player.name}</label>
+          <div class="prediction-controls">
+            <button class="prediction-btn" onclick="changePrediction(${i}, -1)">−</button>
+            <div class="prediction-display" id="pred_display_${i}">${gameState.currentBids[i]}</div>
+            <button class="prediction-btn" onclick="changePrediction(${i}, 1)">+</button>
+          </div>
+        `;
+        grid.appendChild(item);
+      });
+      updatePredictionSum();
+    }
+
+    function changePrediction(playerIndex, delta) {
+      const cardCount = getCurrentCardCount();
+      const newValue = Math.max(0, Math.min(cardCount, gameState.currentBids[playerIndex] + delta));
+      gameState.currentBids[playerIndex] = newValue;
+      document.getElementById(`pred_display_${playerIndex}`).textContent = newValue;
+      updatePredictionSum();
+      saveGameState();
+    }
+
+    function updatePredictionSum() {
+      const sum = gameState.currentBids.reduce((a, b) => a + b, 0);
+      const cardCount = getCurrentCardCount();
+      const sumEl = document.getElementById('predictionSum');
+      sumEl.textContent = `Sum: ${sum} / ${cardCount}`;
+
+      // Dealer lock if equal predictions not allowed
+      if (!gameState.rules.allowEqualPredictions && sum === cardCount) {
+        const dealerIndex = getDealerIndex();
+        if (gameState.currentBids[dealerIndex] !== 0) {
+          showToast('⚠️ Dealer cannot bid this amount (would make sum equal to tricks)', 'warning');
+          gameState.currentBids[dealerIndex] = 0;
+          document.getElementById(`pred_display_${dealerIndex}`).textContent = 0;
+          updatePredictionSum();
+        }
+      }
+    }
+
+    function updateHathsGrid() {
+      const grid = document.getElementById('hathsGrid');
+      const cardCount = getCurrentCardCount();
+
+      grid.innerHTML = '';
+      gameState.players.forEach((player, i) => {
+        const item = document.createElement('div');
+        item.className = 'grid-item';
+        item.innerHTML = `
+          <label>${player.name}</label>
+          <div class="hath-controls">
+            <button class="hath-btn" onclick="changeHath(${i}, -1)">−</button>
+            <input type="number" class="hath-input" id="hath_${i}" value="${gameState.currentWon[i]}"
+                   min="0" max="${cardCount}" onchange="updateHathFromInput(${i})">
+            <button class="hath-btn" onclick="changeHath(${i}, 1)">+</button>
+          </div>
+        `;
+        grid.appendChild(item);
+      });
+
+      updateHathSum();
+    }
+
+    function changeHath(playerIndex, delta) {
+      const cardCount = getCurrentCardCount();
+      const newValue = Math.max(0, Math.min(cardCount, gameState.currentWon[playerIndex] + delta));
+      gameState.currentWon[playerIndex] = newValue;
+      document.getElementById(`hath_${playerIndex}`).value = newValue;
+      updateHathSum();
+      saveGameState();
+    }
+
+    function updateHathFromInput(playerIndex) {
+      const input = document.getElementById(`hath_${playerIndex}`);
+      const cardCount = getCurrentCardCount();
+      const value = Math.max(0, Math.min(cardCount, parseInt(input.value) || 0));
+      input.value = value;
+      gameState.currentWon[playerIndex] = value;
+      updateHathSum();
+      saveGameState();
+    }
+
+    function updateHathSum() {
+      const sum = gameState.currentWon.reduce((a, b) => a + b, 0);
+      const cardCount = getCurrentCardCount();
+      const sumEl = document.getElementById('hathSum');
+      sumEl.textContent = `Sum: ${sum} / ${cardCount}`;
+      document.getElementById('closeRoundBtn').disabled = (sum !== cardCount);
+    }
+
+    function confirmPredictions() {
+      const sum = gameState.currentBids.reduce((a, b) => a + b, 0);
+      const cardCount = getCurrentCardCount();
+
+      if (!gameState.rules.allowEqualPredictions && sum === cardCount) {
+        showToast('Sum of predictions cannot equal number of tricks', 'error');
+        return;
+      }
+
+      document.getElementById('hathsSection').style.display = 'block';
+      document.getElementById('confirmPredictionsBtn').style.display = 'none';
+      showToast('Predictions confirmed! Now enter tricks won.', 'success');
+    }
+
+    function closeRound() {
+      if (gameState.gameEnded) { showToast('Game already ended.', 'warning'); return; }
+
+      const sum = gameState.currentWon.reduce((a, b) => a + b, 0);
+      const cardCount = getCurrentCardCount();
+      if (sum !== cardCount) { showToast('Sum of tricks must equal number of cards dealt', 'error'); return; }
+
+      // Calculate scores + update streak counters with reset at 5 (when bonus awarded)
+      const roundScores = gameState.players.map((player, i) => {
+        const bid = gameState.currentBids[i];
+        const won = gameState.currentWon[i];
+        let points = 0;
+
+        if (bid === won) {
+          if (gameState.rules.scoringMode === 'alt') {
+            // Alternative pattern: 0 -> 10, else 20 + bid
+            points = (bid === 0) ? 10 : (20 + bid);
+          } else {
+            // Classic: 10 + won
+            points = 10 + won;
+          }
+
+          // Streak handling
+          if (gameState.rules.streakBonus) {
+            gameState.streakCounters[i] = (gameState.streakCounters[i] || 0) + 1;
+            if (gameState.streakCounters[i] >= gameState.rules.streakStep) {
+              points += gameState.rules.bonusPoints;
+              // Reset streak to 0 once bonus is awarded
+              gameState.streakCounters[i] = 0;
+            }
+          }
+        } else {
+          // Missed prediction
+          if (gameState.rules.missPenalty === 'difference') {
+            points = -Math.abs(bid - won);
+          } else {
+            points = 0;
+          }
+          // Reset streak on miss
+          if (gameState.rules.streakBonus) gameState.streakCounters[i] = 0;
+        }
+
+        return points;
+      });
+
+      // Save round
+      gameState.rounds.push({
+        roundNumber: gameState.roundIndex + 1,
+        cardCount: cardCount,
+        trump: TRUMP_NAMES[gameState.trumpIndex % 5],
+        bids: [...gameState.currentBids],
+        won: [...gameState.currentWon],
+        scores: roundScores
+      });
+
+      // Prepare next round (infinite cycling 1 <-> max)
+      gameState.roundIndex++;
+      gameState.trumpIndex++;
+      if (gameState.currentCardCount >= gameState.maxCards) gameState.cycleDirection = -1;
+      if (gameState.currentCardCount <= 1) gameState.cycleDirection = 1;
+      gameState.currentCardCount = Math.max(1, Math.min(gameState.maxCards, gameState.currentCardCount + gameState.cycleDirection));
+
+      // Reset round inputs
+      gameState.currentBids.fill(0);
+      gameState.currentWon.fill(0);
+
+      document.getElementById('hathsSection').style.display = 'none';
+      document.getElementById('confirmPredictionsBtn').style.display = 'block';
+
+      saveGameState();
+      updateUI();
+    }
+
+    function undoLastRound() {
+      if (gameState.rounds.length === 0) { showToast('No rounds to undo', 'error'); return; }
+
+      if (confirm('Undo the last round?')) {
+        const removed = gameState.rounds.pop();
+        gameState.roundIndex = Math.max(0, gameState.roundIndex - 1);
+        gameState.trumpIndex = Math.max(0, gameState.trumpIndex - 1);
+
+        gameState.currentCardCount = removed.cardCount;
+        if (gameState.currentCardCount >= gameState.maxCards) gameState.cycleDirection = -1;
+        else if (gameState.currentCardCount <= 1) gameState.cycleDirection = 1;
+
+        // Rebuild streakCounters based on remaining rounds using the new rules
+        if (gameState.rules.streakBonus) {
+          gameState.streakCounters = new Array(gameState.players.length).fill(0);
+          for (const round of gameState.rounds) {
+            round.bids.forEach((b, i) => {
+              const hit = (b === round.won[i]);
+              if (hit) {
+                gameState.streakCounters[i] += 1;
+                if (gameState.streakCounters[i] >= gameState.rules.streakStep) {
+                  // reset after bonus threshold
+                  gameState.streakCounters[i] = 0;
+                }
+              } else {
+                gameState.streakCounters[i] = 0;
+              }
+            });
+          }
+        }
+
+        document.getElementById('hathsSection').style.display = 'none';
+        document.getElementById('confirmPredictionsBtn').style.display = 'block';
+
+        saveGameState();
+        updateUI();
+        showPanel('round-panel');
+        showToast('Last round undone', 'warning');
+      }
+    }
+
+    function endGamePrompt() {
+      if (confirm('Do you want to end the game now?')) {
+        gameState.gameEnded = true;
+        saveGameState();
+        showWinners();
+        showPanel('scoreboard-panel');
+      }
+    }
+
+    function showWinners() {
+      const totals = computeTotals();
+      const indices = totals.map((t, i) => i).sort((a, b) => totals[b] - totals[a]);
+
+      const medals = ['🥇 Gold', '🥈 Silver', '🥉 Bronze'];
+      const top = indices.slice(0, 3).map((idx, rank) => {
+        return `<div style="margin:8px 0;font-weight:800;">
+          <span class="medal">${medals[rank] || ''}</span> — ${gameState.players[idx].name} (${totals[idx]} pts)
+        </div>`;
+      }).join('') || '<div>No winners yet.</div>';
+
+      showModal('Top 3 Winners', `
+        <div style="margin-bottom:10px">Game ended. Here are the leaders:</div>
+        ${top}
+      `);
+    }
+
+    // ===== Scoreboard & History =====
+    function updateScoreboard() {
+      const tbody = document.getElementById('scoreboardBody');
+      tbody.innerHTML = '';
+
+      if (gameState.rounds.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;opacity:.7;">No rounds played yet</td></tr>';
+        document.getElementById('undoRoundBtn').style.display = 'none';
+        return;
+      }
+      document.getElementById('undoRoundBtn').style.display = 'block';
+
+      const totals = computeTotals();
+      const streaks = computeStreaksAll();
+      const lastRound = gameState.rounds[gameState.rounds.length - 1];
+
+      const order = totals.map((t, i) => i).sort((a, b) => totals[b] - totals[a]);
+
+      order.forEach((i, rankIdx) => {
+        const row = document.createElement('tr');
+        const medalEmoji = rankIdx === 0 ? '🥇' : (rankIdx === 1 ? '🥈' : (rankIdx === 2 ? '🥉' : `${rankIdx + 1}`));
+        row.innerHTML = `
+          <td><strong>${medalEmoji}</strong></td>
+          <td><strong>${gameState.players[i].name}</strong></td>
+          <td>${lastRound ? lastRound.bids[i] : '-'}</td>
+          <td>${lastRound ? lastRound.won[i] : '-'}</td>
+          <td>${lastRound ? lastRound.scores[i] : '-'}</td>
+          <td>${streaks[i]}</td>
+          <td><strong>${totals[i]}</strong></td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+
+    function computeTotals() {
+      const totals = new Array(gameState.players.length).fill(0);
+      gameState.rounds.forEach(round => {
+        round.scores.forEach((s, i) => { totals[i] += s; });
+      });
+      return totals;
+    }
+
+    // Show current live streak counters (with reset after bonuses)
+    function computeStreaksAll() {
+      if (gameState.streakCounters?.length) return gameState.streakCounters.slice();
+      // Fallback (shouldn’t happen after startGame)
+      return new Array(gameState.players.length).fill(0);
+    }
+
+    function updateHistory() {
+      const container = document.getElementById('historyContainer');
+
+      if (gameState.rounds.length === 0) {
+        container.innerHTML = '<p style="color: rgba(220,240,255,0.8);">No rounds played yet.</p>';
+        return;
+      }
+
+      container.innerHTML = '';
+      gameState.rounds.slice(-5).reverse().forEach(round => {
+        const item = document.createElement('div');
+        item.className = 'history-item';
+
+        const trump = TRUMP_LABELS[round.trump];
+        const details = gameState.players.map((player, i) =>
+          `${player.name}: ${round.bids[i]}/${round.won[i]} (${round.scores[i]}pts)`
+        ).join(', ');
+
+        item.innerHTML = `
+          <div>
+            <strong>Round ${round.roundNumber}</strong> • ${round.cardCount} cards • ${trump}
+            <br><small style="opacity: 0.8;">${details}</small>
+          </div>
+        `;
+        container.appendChild(item);
+      });
+    }
+
+    function updateMiniScoreboard() {
+      // Placeholder for future compact view if needed.
+    }
+
+    // ===== Helpers =====
+    function getCurrentCardCount() {
+      return Math.max(1, Math.min(gameState.maxCards, gameState.currentCardCount || 1));
+    }
+
+    function getDealerIndex() {
+      return gameState.roundIndex % gameState.players.length;
+    }
+
+    // Legacy fallback; not used for scoring anymore
+    function calculateCurrentStreaks() {
+      const streaks = new Array(gameState.players.length).fill(0);
+      for (let i = gameState.rounds.length - 1; i >= 0; i--) {
+        const round = gameState.rounds[i];
+        for (let j = 0; j < gameState.players.length; j++) {
+          if (round.bids[j] === round.won[j]) { streaks[j]++; } else { break; }
+        }
+      }
+      return streaks;
+    }
+
+    // ===== ONLINE QR CODE (works without local libs) =====
+    function generateQR() {
+      const qrContainer = document.getElementById('qrCode');
+      const url = window.location.href;
+      const imgSrc = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(url)}`;
+      qrContainer.innerHTML = `<img src="${imgSrc}" alt="QR Code" width="200" height="200" loading="lazy">`;
+    }
+
+    // ===== Background (Neon Grid + Floaters) =====
+    function setupBackground() {
+      const canvas = document.getElementById('bgCanvas');
+      const ctx = canvas.getContext('2d');
+
+      function resizeCanvas() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+      }
+      resizeCanvas();
+      window.addEventListener('resize', resizeCanvas);
+
+      const floaters = Array.from({ length: 40 }).map(() => ({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height * 0.6,
+        r: Math.random() * 3 + 1.5,
+        vx: (Math.random() - 0.5) * 0.6,
+        vy: (Math.random() - 0.5) * 0.6,
+        hue: 170 + Math.random() * 120,
+        alpha: 0.35 + Math.random() * 0.35
+      }));
+
+      let t = 0;
+
+      function drawGrid() {
+        const h = canvas.height;
+        const w = canvas.width;
+        const horizon = h * 0.62;
+
+        const grad = ctx.createLinearGradient(0, 0, 0, horizon);
+        grad.addColorStop(0, '#0a0e1a');
+        grad.addColorStop(1, '#0a1830');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, w, horizon);
+
+        const grad2 = ctx.createLinearGradient(0, horizon, 0, h);
+        grad2.addColorStop(0, 'rgba(0, 255, 234, 0.25)');
+        grad2.addColorStop(1, 'rgba(10, 14, 26, 1)');
+        ctx.fillStyle = grad2;
+        ctx.fillRect(0, horizon, w, h - horizon);
+
+        ctx.save();
+        ctx.strokeStyle = 'rgba(0,255,234,0.35)';
+        ctx.lineWidth = 1;
+
+        for (let i = 0; i < 40; i++) {
+          const y = horizon + (i * 10);
+          const scale = (y - horizon) / (h - horizon);
+          ctx.globalAlpha = Math.min(1, scale + 0.1);
+          ctx.beginPath();
+          ctx.moveTo(0, y);
+          ctx.lineTo(w, y);
+          ctx.stroke();
+        }
+
+        const vanX = w / 2 + Math.sin(t * 0.0015) * 40;
+        for (let i = -20; i <= 20; i++) {
+          ctx.globalAlpha = 0.35;
+          ctx.beginPath();
+          ctx.moveTo(vanX, horizon);
+          ctx.lineTo((i + 20) * (w / 40), h);
+          ctx.stroke();
+        }
+        ctx.restore();
+
+        ctx.save();
+        const glow = ctx.createRadialGradient(vanX, horizon, 0, vanX, horizon, 220);
+        glow.addColorStop(0, 'rgba(0,255,234,0.35)');
+        glow.addColorStop(1, 'rgba(0,255,234,0)');
+        ctx.fillStyle = glow;
+        ctx.fillRect(0, 0, w, h);
+        ctx.restore();
+      }
+
+      function drawFloaters() {
+        floaters.forEach(p => {
+          p.x += p.vx;
+          p.y += p.vy;
+          if (p.x < 0 || p.x > canvas.width) p.vx *= -1;
+          if (p.y < 0 || p.y > canvas.height) p.vy *= -1;
+
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+          ctx.fillStyle = `hsla(${p.hue}, 90%, 65%, ${p.alpha})`;
+          ctx.shadowColor = `hsla(${p.hue}, 100%, 70%, ${p.alpha})`;
+          ctx.shadowBlur = 12;
+          ctx.fill();
+        });
+      }
+
+      function animate() {
+        if (!document.getElementById('bgToggle').checked) {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          requestAnimationFrame(animate);
+          return;
+        }
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        drawGrid();
+        drawFloaters();
+        t += 1.6;
+        requestAnimationFrame(animate);
+      }
+
+      animate();
+    }
+
+    function toggleBackground() {
+      const canvas = document.getElementById('bgCanvas');
+      const isEnabled = document.getElementById('bgToggle').checked;
+      canvas.style.display = isEnabled ? 'block' : 'none';
+    }
+
+    // ===== Modal / Toast =====
+    function showInfo(e) {
+      const info = e.target.dataset.info;
+      const infoTexts = {
+        numDecks: 'Number of card decks to use. More decks allow more cards per player in larger groups. Standard is 1 deck (52 cards).',
+        missPenalty: 'Zero: Missing your bid gives 0 points. Difference: Missing your bid subtracts the difference from your score.',
+        allowEqual: 'When disabled, if predictions sum equals tricks available, the dealer cannot make a bid that would cause this.',
+        streakBonus: 'Players get bonus points for consecutive exact bids. Default: +10 points every 5 consecutive hits. Streak resets to 0 when bonus triggers.'
+      };
+      showModal('Game Rules', infoTexts[info] || 'No information available.');
+    }
+
+    function showModal(title, body) {
+      document.getElementById('modalTitle').textContent = title;
+      document.getElementById('modalBody').innerHTML = body;
+      document.getElementById('modal').style.display = 'flex';
+    }
+
+    function closeModal() { document.getElementById('modal').style.display = 'none'; }
+
+    function showToast(message, type = 'success') {
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`;
+      toast.textContent = message;
+      document.body.appendChild(toast);
+      setTimeout(() => { document.body.removeChild(toast); }, 3000);
+    }
+
+    function saveGameState() {
+      try { localStorage.setItem('judgmentGameState', JSON.stringify(gameState)); }
+      catch (e) { console.warn('Could not save game state:', e); }
+    }
+
+    function loadGameState() {
+      try {
+        const saved = localStorage.getItem('judgmentGameState');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          gameState = { ...gameState, ...parsed };
+
+          // restore form
+          document.getElementById('numDecks').value = gameState.rules.numDecks || 1;
+          document.getElementById('missPenalty').value = gameState.rules.missPenalty || 'zero';
+          document.getElementById('allowEqualPredictions').checked = !!gameState.rules.allowEqualPredictions;
+          document.getElementById('streakBonus').checked = (gameState.rules.streakBonus !== false);
+          setScoringModeRadios(gameState.rules.scoringMode || 'classic');
+
+          // ensure streakCounters length matches players
+          if (!Array.isArray(gameState.streakCounters)) gameState.streakCounters = [];
+        }
+      } catch (e) {
+        console.warn('Could not load game state:', e);
+      }
+    }
+
+    // Expose for inline handlers
+    window.removePlayer = removePlayer;
+    window.changePrediction = changePrediction;
+    window.changeHath = changeHath;
+    window.updateHathFromInput = updateHathFromInput;
+  </script>
+</body>
+</html>
