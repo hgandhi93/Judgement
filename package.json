@@ -4,7 +4,7 @@
   "private": true,
   "description": "Live room-enabled Judgment scorekeeper",
   "scripts": {
-    "start": "node server.js"
+    "start": "node fixed-server-v3.js"
   },
   "engines": {
     "node": ">=22"

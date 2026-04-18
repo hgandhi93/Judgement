@@ -1,0 +1,1413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Judgment Live Scorekeeper</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Tahoma, sans-serif;
+      background: linear-gradient(180deg, #08111f, #0e1e36 45%, #08111f);
+      color: #eef5ff;
+    }
+    .page {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 18px;
+    }
+    .hero, .card {
+      background: rgba(12, 24, 44, 0.94);
+      border: 1px solid #25446f;
+      border-radius: 20px;
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.28);
+    }
+    .hero {
+      padding: 22px;
+      margin-bottom: 18px;
+    }
+    .hero h1 {
+      margin: 0 0 8px;
+      font-size: 34px;
+    }
+    .hero p {
+      margin: 0;
+      color: #bcd2ef;
+    }
+    .chips, .toolbar, .actions, .row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+    .chips { margin-top: 14px; }
+    .chip {
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: #16355b;
+      font-size: 13px;
+      font-weight: 700;
+      color: #def0ff;
+    }
+    .layout {
+      display: grid;
+      gap: 18px;
+    }
+    .main, .side {
+      display: grid;
+      gap: 18px;
+    }
+    .card {
+      padding: 18px;
+    }
+    h2, h3 {
+      margin-top: 0;
+      margin-bottom: 14px;
+    }
+    .grid-two {
+      display: grid;
+      gap: 12px;
+    }
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .input, .select, .number {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid #305582;
+      border-radius: 14px;
+      background: #0a1425;
+      color: #eef5ff;
+      font-size: 15px;
+    }
+    .number { width: 110px; }
+    .check-label {
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+      margin: 0;
+    }
+    .btn {
+      border: none;
+      border-radius: 14px;
+      padding: 12px 18px;
+      font-size: 14px;
+      font-weight: 800;
+      cursor: pointer;
+      background: linear-gradient(135deg, #59d5e7, #5d8eff);
+      color: #05111d;
+    }
+    .btn.alt {
+      background: linear-gradient(135deg, #ffcf67, #ff9d5d);
+      color: #321600;
+    }
+    .btn.danger {
+      background: linear-gradient(135deg, #ff7b81, #f04343);
+      color: #fff;
+    }
+    .btn:disabled, .input:disabled, .select:disabled, .number:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .notice {
+      margin-top: 12px;
+      padding: 12px;
+      border-radius: 14px;
+      background: #2d2942;
+      border: 1px solid #5a4d7d;
+      color: #ffe6a8;
+      font-weight: 700;
+    }
+    .muted {
+      color: #bcd2ef;
+      font-size: 13px;
+    }
+    .players, .members, .history, .grid-players {
+      display: grid;
+      gap: 12px;
+    }
+    .player-row, .member-row, .history-row, .score-box {
+      background: #0a1425;
+      border: 1px solid #223d62;
+      border-radius: 16px;
+      padding: 14px;
+    }
+    .player-row, .member-row {
+      display: grid;
+      gap: 12px;
+      align-items: center;
+    }
+    .player-name-wrap {
+      display: grid;
+      gap: 8px;
+    }
+    .dealer-tag {
+      color: #ffe29d;
+      font-size: 13px;
+      font-weight: 800;
+    }
+    .round-top {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+    .badge {
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: #173d69;
+      font-weight: 800;
+    }
+    .badge.dealer {
+      background: #4e4020;
+      color: #ffe29d;
+    }
+    .counter {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      align-items: center;
+    }
+    .count-btn {
+      width: 40px;
+      height: 40px;
+      border: none;
+      border-radius: 999px;
+      background: linear-gradient(135deg, #59d5e7, #5d8eff);
+      color: #05111d;
+      font-size: 20px;
+      font-weight: 900;
+      cursor: pointer;
+    }
+    .count-value {
+      min-width: 60px;
+      height: 60px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      border-radius: 999px;
+      border: 2px solid #335886;
+      font-size: 24px;
+      font-weight: 900;
+    }
+    .sum {
+      margin: 12px 0 14px;
+      padding: 12px;
+      text-align: center;
+      border-radius: 14px;
+      background: #153254;
+      font-weight: 800;
+    }
+    .share-box {
+      margin-top: 12px;
+      padding: 12px;
+      border-radius: 14px;
+      background: #0a1425;
+      border: 1px solid #223d62;
+      word-break: break-word;
+      color: #bcd2ef;
+    }
+    .qr-wrap {
+      text-align: center;
+    }
+    .qr-wrap img {
+      width: 220px;
+      max-width: 100%;
+      padding: 10px;
+      background: #fff;
+      border-radius: 14px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #0a1425;
+      border-radius: 16px;
+      overflow: hidden;
+    }
+    th, td {
+      padding: 12px 10px;
+      border-bottom: 1px solid #223d62;
+      text-align: center;
+      font-size: 14px;
+    }
+    th { background: #153254; }
+    .toast {
+      position: fixed;
+      top: 16px;
+      right: 16px;
+      z-index: 200;
+      padding: 14px 16px;
+      border-radius: 14px;
+      font-weight: 800;
+      color: white;
+      background: #1f9b63;
+      box-shadow: 0 12px 26px rgba(0, 0, 0, 0.28);
+    }
+    .toast.error { background: #c73f3f; }
+    .toast.warn { background: #d78626; }
+    @media (min-width: 940px) {
+      .layout {
+        grid-template-columns: 1.15fr 0.85fr;
+      }
+      .grid-two {
+        grid-template-columns: 1fr 1fr;
+      }
+      .player-row {
+        grid-template-columns: minmax(0, 1fr) auto auto;
+      }
+      .member-row {
+        grid-template-columns: minmax(0, 1fr) auto;
+      }
+      .grid-players {
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <section class="hero">
+      <h1>Judgment Live Scorekeeper</h1>
+      <p>Live rooms, shared scores, editor permissions, dealer tracking, and seating order changes.</p>
+      <div class="chips">
+        <span class="chip" id="roomChip">Offline Mode</span>
+        <span class="chip" id="roleChip">Offline Admin</span>
+        <span class="chip" id="syncChip">Local Only</span>
+      </div>
+    </section>
+
+    <div class="layout">
+      <div class="main">
+        <section class="card">
+          <h2>Live Room</h2>
+          <div class="grid-two">
+            <div>
+              <label for="displayName">Your Name</label>
+              <input id="displayName" class="input" placeholder="Harsh, Scorekeeper, Table 1">
+            </div>
+            <div>
+              <label for="roomCode">Room Code</label>
+              <input id="roomCode" class="input" maxlength="6" placeholder="ABC123">
+            </div>
+          </div>
+          <div class="toolbar" style="margin-top:12px;">
+            <button class="btn" id="createRoomBtn">Create Room</button>
+            <button class="btn" id="joinRoomBtn">Join Room</button>
+            <button class="btn alt" id="leaveRoomBtn" style="display:none;">Leave Room</button>
+            <button class="btn" id="copyLinkBtn" style="display:none;">Copy Join Link</button>
+          </div>
+          <div class="notice" id="permissionBanner" style="display:none;"></div>
+        </section>
+
+        <section class="card">
+          <h2>Game Setup</h2>
+          <div class="row">
+            <label for="numDecks" style="margin-bottom:0;">Decks</label>
+            <input id="numDecks" class="number" type="number" min="1" max="4" value="1" data-edit>
+            <label for="missPenalty" style="margin-bottom:0;">Miss Penalty</label>
+            <select id="missPenalty" class="select" style="max-width:220px;" data-edit>
+              <option value="zero">Zero Points</option>
+              <option value="difference">Minus Difference</option>
+            </select>
+          </div>
+          <div class="row" style="margin-top:12px;">
+            <label class="check-label"><input id="allowEqualPredictions" type="checkbox" data-edit>Allow Equal Predictions</label>
+            <label class="check-label"><input id="streakBonus" type="checkbox" checked data-edit>Streak Bonus</label>
+          </div>
+          <div class="row" style="margin-top:12px;">
+            <label class="check-label"><input type="radio" name="scoringMode" value="classic" checked data-edit>Classic</label>
+            <label class="check-label"><input type="radio" name="scoringMode" value="alt" data-edit>Alternative</label>
+          </div>
+          <div class="actions" style="margin-top:14px;">
+            <button class="btn" id="addPlayerBtn" data-edit>Add Player</button>
+            <button class="btn" id="startGameBtn" data-edit>Start Game</button>
+            <button class="btn alt" id="undoRoundBtn" data-edit>Undo Round</button>
+            <button class="btn danger" id="resetGameBtn" data-edit>Reset Game</button>
+          </div>
+        </section>
+
+        <section class="card">
+          <h2>Players</h2>
+          <div class="players" id="playersContainer"></div>
+        </section>
+
+        <section class="card">
+          <div class="round-top">
+            <div class="badge" id="roundLabel">Round setup</div>
+            <div class="badge dealer" id="dealerLabel">Dealer: -</div>
+            <div class="badge" id="trumpLabel">Trump: Spade</div>
+          </div>
+          <div id="warningArea"></div>
+          <h3>Predictions</h3>
+          <div class="sum" id="predictionSum">Sum: 0 / 1</div>
+          <div class="grid-players" id="predictionsGrid"></div>
+          <div class="actions">
+            <button class="btn" id="confirmPredictionsBtn" data-edit>Confirm Predictions</button>
+          </div>
+          <div id="wonSection" style="display:none; margin-top:18px;">
+            <h3>Tricks Won</h3>
+            <div class="sum" id="wonSum">Sum: 0 / 1</div>
+            <div class="grid-players" id="wonGrid"></div>
+            <div class="actions">
+              <button class="btn" id="closeRoundBtn" data-edit>Close Round</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="card">
+          <h2>Scoreboard</h2>
+          <div style="overflow-x:auto;">
+            <table>
+              <thead>
+                <tr>
+                  <th>Rank</th>
+                  <th>Player</th>
+                  <th>Bid</th>
+                  <th>Won</th>
+                  <th>Pts</th>
+                  <th>Streak</th>
+                  <th>Total</th>
+                </tr>
+              </thead>
+              <tbody id="scoreboardBody"></tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+
+      <div class="side">
+        <section class="card">
+          <h2>Connected People</h2>
+          <div class="members" id="membersContainer"></div>
+        </section>
+
+        <section class="card">
+          <h2>Share Room</h2>
+          <div class="qr-wrap">
+            <div id="qrArea"></div>
+            <div class="share-box" id="linkBox">Create a room to show a QR code and join link.</div>
+          </div>
+        </section>
+
+        <section class="card">
+          <h2>Recent Rounds</h2>
+          <div class="history" id="historyContainer">
+            <div class="history-row">No rounds played yet.</div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const STORAGE = {
+      game: "judgment_live_state_v3",
+      session: "judgment_live_session_v3",
+      name: "judgment_live_name_v3"
+    };
+    const TRUMPS = ["Spade", "Diamond", "Club", "Heart", "No Trump"];
+
+    let gameState = createDefaultGameState();
+    const roomState = {
+      sessionId: getSessionId(),
+      roomCode: null,
+      joinUrl: "",
+      name: "",
+      role: "offline-admin",
+      canEdit: true,
+      members: [],
+      serverInfo: { addresses: [], port: null },
+      eventSource: null,
+      reconnectTimer: null,
+      presenceTimer: null,
+      syncTimer: null,
+      applyingRemote: false
+    };
+
+    document.addEventListener("DOMContentLoaded", init);
+
+    function init() {
+      try {
+        loadLocalState();
+        bindEvents();
+        refreshAll({ skipRemote: true });
+        loadServerInfo().finally(maybeJoinFromUrl);
+      } catch (error) {
+        console.error("Init failed:", error);
+        showToast("The page hit a startup error. Reload and try again.", "error");
+      }
+    }
+
+    function createDefaultGameState() {
+      return {
+        players: [],
+        rules: {
+          numDecks: 1,
+          missPenalty: "zero",
+          allowEqualPredictions: false,
+          streakBonus: true,
+          streakStep: 5,
+          bonusPoints: 10,
+          scoringMode: "classic"
+        },
+        roundIndex: 0,
+        maxCards: 1,
+        currentCardCount: 1,
+        cycleDirection: 1,
+        trumpIndex: 0,
+        rounds: [],
+        currentBids: [],
+        currentWon: [],
+        streakCounters: [],
+        hasStarted: false,
+        roundPhase: "bidding",
+        gameEnded: false
+      };
+    }
+
+    function normalizeState(value) {
+      const base = createDefaultGameState();
+      const merged = {
+        ...base,
+        ...(value || {}),
+        rules: { ...base.rules, ...((value && value.rules) || {}) }
+      };
+      if (!Array.isArray(merged.players)) merged.players = [];
+      if (!Array.isArray(merged.rounds)) merged.rounds = [];
+      if (!Array.isArray(merged.currentBids)) merged.currentBids = [];
+      if (!Array.isArray(merged.currentWon)) merged.currentWon = [];
+      if (!Array.isArray(merged.streakCounters)) merged.streakCounters = [];
+      merged.hasStarted = !!merged.hasStarted;
+      if (!merged.roundPhase) merged.roundPhase = "bidding";
+      syncPlayerArrays(merged);
+      return merged;
+    }
+
+    function syncPlayerArrays(state) {
+      const count = Array.isArray(state.players) ? state.players.length : 0;
+      state.currentBids = Array.from({ length: count }, (_, index) => Number(state.currentBids[index]) || 0);
+      state.currentWon = Array.from({ length: count }, (_, index) => Number(state.currentWon[index]) || 0);
+      state.streakCounters = Array.from({ length: count }, (_, index) => Number(state.streakCounters[index]) || 0);
+    }
+
+    function getSessionId() {
+      let id = localStorage.getItem(STORAGE.session);
+      if (!id) {
+        id = `session_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+        localStorage.setItem(STORAGE.session, id);
+      }
+      return id;
+    }
+
+    function loadLocalState() {
+      try {
+        const saved = localStorage.getItem(STORAGE.game);
+        if (saved) gameState = normalizeState(JSON.parse(saved));
+      } catch (error) {
+        console.warn("Could not load local state:", error);
+      }
+      roomState.name = localStorage.getItem(STORAGE.name) || "";
+      document.getElementById("displayName").value = roomState.name;
+      syncRuleInputs();
+      if (gameState.players.length === 0) {
+        for (let index = 0; index < 3; index++) {
+          gameState.players.push({ id: makeId("p"), name: "" });
+        }
+      }
+      syncPlayerArrays(gameState);
+    }
+
+    function bindEvents() {
+      document.getElementById("displayName").addEventListener("input", (event) => {
+        roomState.name = event.target.value.trim();
+        localStorage.setItem(STORAGE.name, roomState.name);
+      });
+      document.getElementById("roomCode").addEventListener("input", (event) => {
+        event.target.value = event.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6);
+      });
+      document.getElementById("createRoomBtn").addEventListener("click", createRoom);
+      document.getElementById("joinRoomBtn").addEventListener("click", joinRoom);
+      document.getElementById("leaveRoomBtn").addEventListener("click", leaveRoom);
+      document.getElementById("copyLinkBtn").addEventListener("click", copyJoinLink);
+      document.getElementById("addPlayerBtn").addEventListener("click", addPlayer);
+      document.getElementById("startGameBtn").addEventListener("click", startGame);
+      document.getElementById("undoRoundBtn").addEventListener("click", undoRound);
+      document.getElementById("resetGameBtn").addEventListener("click", resetGame);
+      document.getElementById("confirmPredictionsBtn").addEventListener("click", confirmPredictions);
+      document.getElementById("closeRoundBtn").addEventListener("click", closeRound);
+      document.getElementById("numDecks").addEventListener("change", updateRules);
+      document.getElementById("missPenalty").addEventListener("change", updateRules);
+      document.getElementById("allowEqualPredictions").addEventListener("change", updateRules);
+      document.getElementById("streakBonus").addEventListener("change", updateRules);
+      document.querySelectorAll("input[name='scoringMode']").forEach((radio) => {
+        radio.addEventListener("change", updateRules);
+      });
+      window.addEventListener("beforeunload", () => {
+        if (!roomState.roomCode) return;
+        navigator.sendBeacon(
+          `/api/rooms/${roomState.roomCode}/leave`,
+          new Blob([JSON.stringify({ sessionId: roomState.sessionId })], { type: "application/json" })
+        );
+      });
+    }
+
+    function refreshAll(options = {}) {
+      saveLocalGame(options.skipRemote);
+      renderRoomState();
+      renderPlayers();
+      renderMembers();
+      renderRound();
+      renderScoreboard();
+      renderHistory();
+      renderShare();
+      syncEditControls();
+    }
+
+    function saveLocalGame(skipRemote) {
+      try {
+        localStorage.setItem(STORAGE.game, JSON.stringify(gameState));
+      } catch (error) {
+        console.warn("Could not save local state:", error);
+      }
+      if (!skipRemote) queueSync();
+    }
+
+    function syncRuleInputs() {
+      document.getElementById("numDecks").value = gameState.rules.numDecks || 1;
+      document.getElementById("missPenalty").value = gameState.rules.missPenalty || "zero";
+      document.getElementById("allowEqualPredictions").checked = !!gameState.rules.allowEqualPredictions;
+      document.getElementById("streakBonus").checked = gameState.rules.streakBonus !== false;
+      document.querySelectorAll("input[name='scoringMode']").forEach((radio) => {
+        radio.checked = radio.value === (gameState.rules.scoringMode || "classic");
+      });
+    }
+
+    function canEdit() {
+      return !roomState.roomCode || roomState.canEdit;
+    }
+
+    function ensureEditable(action) {
+      if (canEdit()) return true;
+      showToast(`Read-only mode: ask the admin for edit access to ${action}.`, "warn");
+      return false;
+    }
+
+    function syncEditControls() {
+      const editable = canEdit();
+      document.querySelectorAll("[data-edit]").forEach((element) => {
+        element.disabled = !editable;
+      });
+      const banner = document.getElementById("permissionBanner");
+      if (roomState.roomCode && !editable) {
+        banner.style.display = "block";
+        banner.textContent = "You are connected in read-only mode. The admin can grant edit access from Connected People.";
+      } else if (roomState.roomCode && roomState.role === "editor") {
+        banner.style.display = "block";
+        banner.textContent = "You can edit this room because the admin granted editor access.";
+      } else {
+        banner.style.display = "none";
+      }
+    }
+
+    function renderRoomState() {
+      document.getElementById("roomChip").textContent = roomState.roomCode ? `Room ${roomState.roomCode}` : "Offline Mode";
+      document.getElementById("roleChip").textContent = roomState.roomCode ? capitalize(roomState.role) : "Offline Admin";
+      document.getElementById("syncChip").textContent = roomState.roomCode ? "Live Sync" : "Local Only";
+      document.getElementById("leaveRoomBtn").style.display = roomState.roomCode ? "inline-flex" : "none";
+      document.getElementById("copyLinkBtn").style.display = roomState.roomCode ? "inline-flex" : "none";
+    }
+
+    function renderPlayers() {
+      const container = document.getElementById("playersContainer");
+      const editable = canEdit();
+      container.innerHTML = "";
+      gameState.players.forEach((player, index) => {
+        const row = document.createElement("div");
+        row.className = "player-row";
+
+        const nameWrap = document.createElement("div");
+        nameWrap.className = "player-name-wrap";
+
+        const input = document.createElement("input");
+        input.type = "text";
+        input.className = "input";
+        input.placeholder = `Player ${index + 1}`;
+        input.value = player.name || "";
+        input.dataset.playerName = player.id;
+        input.disabled = !editable || gameState.hasStarted;
+        input.addEventListener("input", (event) => {
+          player.name = event.target.value;
+        });
+        const persistName = () => {
+          player.name = input.value.trim();
+          saveLocalGame();
+        };
+        input.addEventListener("blur", persistName);
+        input.addEventListener("change", persistName);
+        nameWrap.appendChild(input);
+
+        if (gameState.hasStarted && getDealerIndex() === index) {
+          const dealerTag = document.createElement("div");
+          dealerTag.className = "dealer-tag";
+          dealerTag.textContent = "Dealer";
+          nameWrap.appendChild(dealerTag);
+        }
+
+        const seatActions = document.createElement("div");
+        seatActions.className = "actions";
+        const seatUp = document.createElement("button");
+        seatUp.className = "btn";
+        seatUp.textContent = "Seat Up";
+        seatUp.disabled = !editable;
+        seatUp.addEventListener("click", () => moveSeat(index, -1));
+        const seatDown = document.createElement("button");
+        seatDown.className = "btn";
+        seatDown.textContent = "Seat Down";
+        seatDown.disabled = !editable;
+        seatDown.addEventListener("click", () => moveSeat(index, 1));
+        seatActions.appendChild(seatUp);
+        seatActions.appendChild(seatDown);
+
+        const removeActions = document.createElement("div");
+        removeActions.className = "actions";
+        const removeButton = document.createElement("button");
+        removeButton.className = "btn danger";
+        removeButton.textContent = "Remove";
+        removeButton.disabled = !editable || gameState.hasStarted;
+        removeButton.addEventListener("click", () => removePlayer(player.id));
+        removeActions.appendChild(removeButton);
+
+        row.appendChild(nameWrap);
+        row.appendChild(seatActions);
+        row.appendChild(removeActions);
+        container.appendChild(row);
+      });
+    }
+
+    function renderMembers() {
+      const container = document.getElementById("membersContainer");
+      if (!roomState.roomCode || roomState.members.length === 0) {
+        container.innerHTML = '<div class="member-row"><div>No room connected yet.</div></div>';
+        return;
+      }
+      container.innerHTML = "";
+      roomState.members.forEach((member) => {
+        const row = document.createElement("div");
+        row.className = "member-row";
+        row.innerHTML = `
+          <div>
+            <div><strong>${escapeHtml(member.name)}</strong>${member.you ? " (You)" : ""}</div>
+            <div class="muted">${capitalize(member.role)} - Seen ${formatSeen(member.lastSeen)}</div>
+          </div>
+          <div class="actions"></div>
+        `;
+        const actions = row.querySelector(".actions");
+        if (roomState.role === "admin" && !member.you && member.role !== "admin") {
+          const toggleButton = document.createElement("button");
+          if (member.role === "viewer") {
+            toggleButton.className = "btn";
+            toggleButton.textContent = "Allow Edit";
+            toggleButton.addEventListener("click", () => updateMemberRole(member.sessionId, "editor"));
+          } else {
+            toggleButton.className = "btn alt";
+            toggleButton.textContent = "Read Only";
+            toggleButton.addEventListener("click", () => updateMemberRole(member.sessionId, "viewer"));
+          }
+          actions.appendChild(toggleButton);
+        }
+        container.appendChild(row);
+      });
+    }
+
+    function renderRound() {
+      const cardCount = getCurrentCardCount();
+      document.getElementById("roundLabel").textContent = gameState.hasStarted
+        ? `Round ${gameState.roundIndex + 1} - ${cardCount} card${cardCount === 1 ? "" : "s"}`
+        : "Round setup - Start the game";
+      document.getElementById("dealerLabel").textContent = gameState.hasStarted
+        ? `Dealer: ${gameState.players[getDealerIndex()]?.name || "-"}`
+        : "Dealer: -";
+      document.getElementById("trumpLabel").textContent = `Trump: ${TRUMPS[gameState.trumpIndex % TRUMPS.length]}`;
+
+      const warnings = [];
+      if (!gameState.hasStarted) {
+        warnings.push("Enter at least 3 unique player names, then press Start Game.");
+      } else if (gameState.rules.streakBonus) {
+        computeStreaks().forEach((streak, index) => {
+          if (streak === gameState.rules.streakStep - 1) {
+            warnings.push(`${gameState.players[index].name || `Player ${index + 1}`} is 1 away from +${gameState.rules.bonusPoints}.`);
+          }
+        });
+      }
+      document.getElementById("warningArea").innerHTML = warnings.map((warning) => `<div class="notice">${escapeHtml(warning)}</div>`).join("");
+      renderPredictionGrid();
+      renderWonGrid();
+    }
+
+    function renderPredictionGrid() {
+      const editable = canEdit() && gameState.hasStarted && gameState.roundPhase === "bidding";
+      const grid = document.getElementById("predictionsGrid");
+      grid.innerHTML = "";
+      gameState.players.forEach((player, index) => {
+        const box = document.createElement("div");
+        box.className = "score-box";
+        box.innerHTML = `
+          <label>${escapeHtml(player.name || `Player ${index + 1}`)}</label>
+          <div class="counter">
+            <button class="count-btn" ${editable ? "" : "disabled"}>-</button>
+            <div class="count-value">${gameState.currentBids[index] || 0}</div>
+            <button class="count-btn" ${editable ? "" : "disabled"}>+</button>
+          </div>
+        `;
+        const buttons = box.querySelectorAll("button");
+        buttons[0].addEventListener("click", () => changeBid(index, -1));
+        buttons[1].addEventListener("click", () => changeBid(index, 1));
+        grid.appendChild(box);
+      });
+      document.getElementById("predictionSum").textContent = `Sum: ${sum(gameState.currentBids)} / ${cardCountText()}`;
+      const confirmButton = document.getElementById("confirmPredictionsBtn");
+      confirmButton.style.display = gameState.roundPhase === "bidding" ? "inline-flex" : "none";
+      confirmButton.disabled = !editable;
+    }
+
+    function renderWonGrid() {
+      const editable = canEdit() && gameState.hasStarted && gameState.roundPhase === "results";
+      const grid = document.getElementById("wonGrid");
+      grid.innerHTML = "";
+      gameState.players.forEach((player, index) => {
+        const box = document.createElement("div");
+        box.className = "score-box";
+        box.innerHTML = `
+          <label>${escapeHtml(player.name || `Player ${index + 1}`)}</label>
+          <div class="counter">
+            <button class="count-btn" ${editable ? "" : "disabled"}>-</button>
+            <div class="count-value">${gameState.currentWon[index] || 0}</div>
+            <button class="count-btn" ${editable ? "" : "disabled"}>+</button>
+          </div>
+        `;
+        const buttons = box.querySelectorAll("button");
+        buttons[0].addEventListener("click", () => changeWon(index, -1));
+        buttons[1].addEventListener("click", () => changeWon(index, 1));
+        grid.appendChild(box);
+      });
+      document.getElementById("wonSection").style.display = gameState.roundPhase === "results" ? "block" : "none";
+      document.getElementById("wonSum").textContent = `Sum: ${sum(gameState.currentWon)} / ${cardCountText()}`;
+      document.getElementById("closeRoundBtn").disabled = !editable || sum(gameState.currentWon) !== getCurrentCardCount();
+    }
+
+    function renderScoreboard() {
+      const body = document.getElementById("scoreboardBody");
+      if (gameState.rounds.length === 0) {
+        body.innerHTML = '<tr><td colspan="7">No rounds yet.</td></tr>';
+        return;
+      }
+      const totals = computeTotals();
+      const streaks = computeStreaks();
+      const lastRound = gameState.rounds[gameState.rounds.length - 1];
+      const order = totals.map((value, index) => index).sort((a, b) => totals[b] - totals[a]);
+      body.innerHTML = order.map((index, rank) => `
+        <tr>
+          <td>${rank + 1}</td>
+          <td>${escapeHtml(gameState.players[index].name || `Player ${index + 1}`)}</td>
+          <td>${lastRound.bids[index]}</td>
+          <td>${lastRound.won[index]}</td>
+          <td>${lastRound.scores[index]}</td>
+          <td>${streaks[index]}</td>
+          <td><strong>${totals[index]}</strong></td>
+        </tr>
+      `).join("");
+    }
+
+    function renderHistory() {
+      const container = document.getElementById("historyContainer");
+      if (gameState.rounds.length === 0) {
+        container.innerHTML = '<div class="history-row">No rounds played yet.</div>';
+        return;
+      }
+      container.innerHTML = gameState.rounds.slice(-6).reverse().map((round) => {
+        const details = gameState.players
+          .map((player, index) => `${player.name || `Player ${index + 1}`}: ${round.bids[index]}/${round.won[index]} (${round.scores[index]})`)
+          .join(", ");
+        return `
+          <div class="history-row">
+            <strong>Round ${round.roundNumber}</strong>
+            <div>${round.cardCount} cards - ${TRUMPS[round.trumpIndex || 0] || round.trump || "-"}</div>
+            <div class="muted">${escapeHtml(details)}</div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function renderShare() {
+      const qrArea = document.getElementById("qrArea");
+      const linkBox = document.getElementById("linkBox");
+      if (!roomState.roomCode || !roomState.joinUrl) {
+        qrArea.innerHTML = "";
+        linkBox.textContent = "Create a room to show a QR code and join link.";
+        return;
+      }
+      const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(roomState.joinUrl)}`;
+      qrArea.innerHTML = `<img src="${qrUrl}" alt="Room QR code">`;
+      linkBox.textContent = `${roomState.joinUrl} | Room Code: ${roomState.roomCode}`;
+    }
+
+    function commitPlayerNamesFromDom() {
+      document.querySelectorAll("[data-player-name]").forEach((input) => {
+        const player = gameState.players.find((entry) => entry.id === input.dataset.playerName);
+        if (player) player.name = input.value.trim();
+      });
+    }
+
+    function addPlayer() {
+      if (!ensureEditable("add players")) return;
+      if (gameState.hasStarted) return showToast("Reset the game to add more players.", "warn");
+      if (gameState.players.length >= 20) return showToast("Maximum 20 players allowed.", "error");
+      gameState.players.push({ id: makeId("p"), name: "" });
+      syncPlayerArrays(gameState);
+      refreshAll();
+    }
+
+    function removePlayer(playerId) {
+      if (!ensureEditable("remove players")) return;
+      if (gameState.hasStarted) return showToast("Reset the game to remove players.", "warn");
+      if (gameState.players.length <= 3) return showToast("Minimum 3 players required.", "error");
+      gameState.players = gameState.players.filter((player) => player.id !== playerId);
+      syncPlayerArrays(gameState);
+      refreshAll();
+    }
+
+    function moveSeat(index, step) {
+      if (!ensureEditable("change seating order")) return;
+      const target = index + step;
+      if (target < 0 || target >= gameState.players.length) return;
+      swap(gameState.players, index, target);
+      swap(gameState.currentBids, index, target);
+      swap(gameState.currentWon, index, target);
+      swap(gameState.streakCounters, index, target);
+      gameState.rounds.forEach((round) => {
+        swap(round.bids, index, target);
+        swap(round.won, index, target);
+        swap(round.scores, index, target);
+      });
+      refreshAll();
+    }
+
+    function updateRules() {
+      if (!ensureEditable("change rules")) return;
+      gameState.rules.numDecks = parseInt(document.getElementById("numDecks").value, 10) || 1;
+      gameState.rules.missPenalty = document.getElementById("missPenalty").value;
+      gameState.rules.allowEqualPredictions = document.getElementById("allowEqualPredictions").checked;
+      gameState.rules.streakBonus = document.getElementById("streakBonus").checked;
+      gameState.rules.scoringMode = document.querySelector("input[name='scoringMode']:checked").value;
+      saveLocalGame();
+    }
+
+    function startGame() {
+      if (!ensureEditable("start the game")) return;
+      commitPlayerNamesFromDom();
+      const validPlayers = gameState.players
+        .map((player) => ({ ...player, name: String(player.name || "").trim() }))
+        .filter((player) => player.name);
+      if (validPlayers.length < 3) return showToast("Name at least 3 players before starting.", "error");
+      const names = validPlayers.map((player) => player.name.toLowerCase());
+      if (new Set(names).size !== names.length) return showToast("Player names must be unique.", "error");
+      gameState.players = validPlayers;
+      const totalCards = 52 * gameState.rules.numDecks;
+      gameState.maxCards = Math.max(1, Math.floor(totalCards / gameState.players.length));
+      gameState.roundIndex = 0;
+      gameState.currentCardCount = 1;
+      gameState.cycleDirection = 1;
+      gameState.trumpIndex = 0;
+      gameState.rounds = [];
+      gameState.currentBids = new Array(gameState.players.length).fill(0);
+      gameState.currentWon = new Array(gameState.players.length).fill(0);
+      gameState.streakCounters = new Array(gameState.players.length).fill(0);
+      gameState.hasStarted = true;
+      gameState.roundPhase = "bidding";
+      gameState.gameEnded = false;
+      refreshAll();
+      showToast("Game started.");
+    }
+
+    function resetGame() {
+      if (!ensureEditable("reset the game")) return;
+      if (!confirm("Reset the game and clear all rounds?")) return;
+      commitPlayerNamesFromDom();
+      const keepPlayers = gameState.players.map((player) => ({ ...player }));
+      const keepRules = { ...gameState.rules };
+      gameState = normalizeState({ players: keepPlayers, rules: keepRules });
+      refreshAll();
+      showToast("Game reset.", "warn");
+    }
+
+    function undoRound() {
+      if (!ensureEditable("undo the round")) return;
+      if (!gameState.rounds.length) return showToast("No rounds to undo.", "error");
+      if (!confirm("Undo the last round?")) return;
+      const removed = gameState.rounds.pop();
+      gameState.roundIndex = Math.max(0, gameState.roundIndex - 1);
+      gameState.trumpIndex = Math.max(0, gameState.trumpIndex - 1);
+      gameState.currentCardCount = removed.cardCount;
+      if (gameState.currentCardCount >= gameState.maxCards) gameState.cycleDirection = -1;
+      if (gameState.currentCardCount <= 1) gameState.cycleDirection = 1;
+      gameState.currentBids = [...removed.bids];
+      gameState.currentWon = new Array(gameState.players.length).fill(0);
+      gameState.hasStarted = true;
+      gameState.roundPhase = "bidding";
+      gameState.gameEnded = false;
+      rebuildStreaks();
+      refreshAll();
+      showToast("Last round undone.", "warn");
+    }
+
+    function changeBid(index, delta) {
+      if (!ensureEditable("change bids")) return;
+      if (!gameState.hasStarted || gameState.roundPhase !== "bidding") return;
+      const cardCount = getCurrentCardCount();
+      const dealerIndex = getDealerIndex();
+      let next = clamp((gameState.currentBids[index] || 0) + delta, 0, cardCount);
+      if (!gameState.rules.allowEqualPredictions && index === dealerIndex) {
+        const sumOthers = gameState.currentBids.reduce((acc, bid, bidIndex) => bidIndex === index ? acc : acc + bid, 0);
+        const forbidden = cardCount - sumOthers;
+        if (forbidden >= 0 && forbidden <= cardCount && next === forbidden) {
+          next = delta > 0 ? clamp(next + 1, 0, cardCount) : clamp(next - 1, 0, cardCount);
+          if (next === forbidden) {
+            showToast("Dealer cannot make total bids equal tricks.", "warn");
+            return;
+          }
+        }
+      }
+      gameState.currentBids[index] = next;
+      saveLocalGame();
+      renderRound();
+    }
+
+    function confirmPredictions() {
+      if (!ensureEditable("confirm predictions")) return;
+      if (!gameState.hasStarted) return showToast("Start the game before entering predictions.", "warn");
+      if (!gameState.rules.allowEqualPredictions && sum(gameState.currentBids) === getCurrentCardCount()) {
+        return showToast("Prediction sum cannot equal total tricks.", "error");
+      }
+      gameState.roundPhase = "results";
+      saveLocalGame();
+      renderRound();
+      showToast("Predictions confirmed.");
+    }
+
+    function changeWon(index, delta) {
+      if (!ensureEditable("change tricks won")) return;
+      if (!gameState.hasStarted || gameState.roundPhase !== "results") return;
+      gameState.currentWon[index] = clamp((gameState.currentWon[index] || 0) + delta, 0, getCurrentCardCount());
+      saveLocalGame();
+      renderRound();
+    }
+
+    function closeRound() {
+      if (!ensureEditable("close the round")) return;
+      if (!gameState.hasStarted) return showToast("Start the game before closing rounds.", "warn");
+      const cardCount = getCurrentCardCount();
+      if (sum(gameState.currentWon) !== cardCount) {
+        return showToast("Total tricks won must equal cards dealt.", "error");
+      }
+      const scores = gameState.players.map((player, index) => {
+        const bid = gameState.currentBids[index];
+        const won = gameState.currentWon[index];
+        let points = 0;
+        if (bid === won) {
+          points = gameState.rules.scoringMode === "alt" ? (bid === 0 ? 10 : 20 + bid) : 10 + won;
+          if (gameState.rules.streakBonus) {
+            gameState.streakCounters[index] = (gameState.streakCounters[index] || 0) + 1;
+            if (gameState.streakCounters[index] >= gameState.rules.streakStep) {
+              points += gameState.rules.bonusPoints;
+              gameState.streakCounters[index] = 0;
+            }
+          }
+        } else {
+          points = gameState.rules.missPenalty === "difference" ? -Math.abs(bid - won) : 0;
+          if (gameState.rules.streakBonus) gameState.streakCounters[index] = 0;
+        }
+        return points;
+      });
+      gameState.rounds.push({
+        roundNumber: gameState.roundIndex + 1,
+        cardCount,
+        trump: TRUMPS[gameState.trumpIndex % TRUMPS.length],
+        trumpIndex: gameState.trumpIndex % TRUMPS.length,
+        bids: [...gameState.currentBids],
+        won: [...gameState.currentWon],
+        scores
+      });
+      gameState.roundIndex += 1;
+      gameState.trumpIndex += 1;
+      if (gameState.currentCardCount >= gameState.maxCards) gameState.cycleDirection = -1;
+      if (gameState.currentCardCount <= 1) gameState.cycleDirection = 1;
+      gameState.currentCardCount = clamp(gameState.currentCardCount + gameState.cycleDirection, 1, gameState.maxCards);
+      gameState.currentBids = new Array(gameState.players.length).fill(0);
+      gameState.currentWon = new Array(gameState.players.length).fill(0);
+      gameState.roundPhase = "bidding";
+      saveLocalGame();
+      refreshAll();
+      showToast("Round saved.");
+    }
+
+    function computeTotals() {
+      const totals = new Array(gameState.players.length).fill(0);
+      gameState.rounds.forEach((round) => {
+        round.scores.forEach((score, index) => {
+          totals[index] += score;
+        });
+      });
+      return totals;
+    }
+
+    function computeStreaks() {
+      if (gameState.streakCounters.length === gameState.players.length) {
+        return gameState.streakCounters.slice();
+      }
+      const streaks = new Array(gameState.players.length).fill(0);
+      for (let playerIndex = 0; playerIndex < gameState.players.length; playerIndex++) {
+        for (let roundIndex = gameState.rounds.length - 1; roundIndex >= 0; roundIndex--) {
+          const round = gameState.rounds[roundIndex];
+          if (round.bids[playerIndex] === round.won[playerIndex]) streaks[playerIndex] += 1;
+          else break;
+        }
+      }
+      return streaks;
+    }
+
+    function rebuildStreaks() {
+      gameState.streakCounters = new Array(gameState.players.length).fill(0);
+      if (!gameState.rules.streakBonus) return;
+      gameState.rounds.forEach((round) => {
+        round.bids.forEach((bid, index) => {
+          if (bid === round.won[index]) {
+            gameState.streakCounters[index] += 1;
+            if (gameState.streakCounters[index] >= gameState.rules.streakStep) {
+              gameState.streakCounters[index] = 0;
+            }
+          } else {
+            gameState.streakCounters[index] = 0;
+          }
+        });
+      });
+    }
+
+    function getCurrentCardCount() {
+      return clamp(gameState.currentCardCount || 1, 1, Math.max(1, gameState.maxCards || 1));
+    }
+
+    function getDealerIndex() {
+      return gameState.players.length ? gameState.roundIndex % gameState.players.length : 0;
+    }
+
+    function cardCountText() {
+      return getCurrentCardCount();
+    }
+
+    async function loadServerInfo() {
+      try {
+        const response = await fetch("/api/server-info");
+        if (!response.ok) return;
+        roomState.serverInfo = await response.json();
+      } catch (error) {
+        console.warn("Server info failed:", error);
+      }
+    }
+
+    function maybeJoinFromUrl() {
+      const params = new URLSearchParams(window.location.search);
+      const room = params.get("room");
+      if (!room) return;
+      document.getElementById("roomCode").value = room.toUpperCase();
+      if (roomState.name) joinRoom();
+      else showToast("Add your name, then tap Join Room.", "warn");
+    }
+
+    async function createRoom() {
+      if (!roomState.name) return showToast("Add your name before creating a room.", "warn");
+      try {
+        const response = await fetch("/api/rooms", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            sessionId: roomState.sessionId,
+            collaboratorName: roomState.name,
+            gameState
+          })
+        });
+        const snapshot = await readApiResponse(response);
+        if (!response.ok) return showToast(snapshot.error || "Could not create room.", "error");
+        applyRoomSnapshot(snapshot);
+        connectRoomEvents();
+        updateQuery(snapshot.code);
+        showToast(`Room ${snapshot.code} created.`);
+      } catch (error) {
+        console.error("Create room failed:", error);
+        showToast("Could not create room.", "error");
+      }
+    }
+
+    async function joinRoom() {
+      const code = document.getElementById("roomCode").value.trim().toUpperCase();
+      if (!code) return showToast("Enter a room code.", "warn");
+      if (!roomState.name) return showToast("Add your name before joining.", "warn");
+      try {
+        const response = await fetch(`/api/rooms/${code}/join`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            sessionId: roomState.sessionId,
+            collaboratorName: roomState.name
+          })
+        });
+        const snapshot = await readApiResponse(response);
+        if (!response.ok) return showToast(snapshot.error || "Could not join room.", "error");
+        applyRoomSnapshot(snapshot);
+        connectRoomEvents();
+        updateQuery(snapshot.code);
+        showToast(`Joined room ${snapshot.code}.`);
+      } catch (error) {
+        console.error("Join room failed:", error);
+        showToast("Could not join room.", "error");
+      }
+    }
+
+    async function leaveRoom() {
+      if (!roomState.roomCode) return;
+      const code = roomState.roomCode;
+      try {
+        await fetch(`/api/rooms/${code}/leave`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ sessionId: roomState.sessionId })
+        });
+      } catch (error) {
+        console.warn("Leave room failed:", error);
+      }
+      disconnectRoom();
+      roomState.roomCode = null;
+      roomState.joinUrl = "";
+      roomState.role = "offline-admin";
+      roomState.canEdit = true;
+      roomState.members = [];
+      updateQuery(null);
+      refreshAll();
+      showToast(`Left room ${code}.`, "warn");
+    }
+
+    function disconnectRoom() {
+      if (roomState.eventSource) {
+        roomState.eventSource.close();
+        roomState.eventSource = null;
+      }
+      clearInterval(roomState.presenceTimer);
+      clearTimeout(roomState.reconnectTimer);
+      clearTimeout(roomState.syncTimer);
+      roomState.presenceTimer = null;
+      roomState.reconnectTimer = null;
+      roomState.syncTimer = null;
+    }
+
+    function connectRoomEvents() {
+      disconnectRoom();
+      if (!roomState.roomCode) return;
+      const params = new URLSearchParams({
+        sessionId: roomState.sessionId,
+        name: roomState.name || "Guest"
+      });
+      const source = new EventSource(`/api/rooms/${roomState.roomCode}/events?${params.toString()}`);
+      roomState.eventSource = source;
+      source.addEventListener("room", (event) => {
+        applyRoomSnapshot(JSON.parse(event.data));
+      });
+      source.onerror = () => {
+        if (roomState.eventSource === source) {
+          roomState.eventSource.close();
+          roomState.eventSource = null;
+        }
+        clearTimeout(roomState.reconnectTimer);
+        roomState.reconnectTimer = setTimeout(connectRoomEvents, 2000);
+      };
+      roomState.presenceTimer = setInterval(sendPresence, 15000);
+    }
+
+    async function sendPresence() {
+      if (!roomState.roomCode) return;
+      try {
+        await fetch(`/api/rooms/${roomState.roomCode}/presence`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            sessionId: roomState.sessionId,
+            collaboratorName: roomState.name
+          })
+        });
+      } catch (error) {
+        console.warn("Presence failed:", error);
+      }
+    }
+
+    async function updateMemberRole(targetSessionId, role) {
+      if (roomState.role !== "admin") return;
+      try {
+        const response = await fetch(`/api/rooms/${roomState.roomCode}/permissions`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            sessionId: roomState.sessionId,
+            collaboratorName: roomState.name,
+            targetSessionId,
+            role
+          })
+        });
+        const snapshot = await readApiResponse(response);
+        if (!response.ok) return showToast(snapshot.error || "Could not update permission.", "error");
+        applyRoomSnapshot(snapshot);
+      } catch (error) {
+        console.error("Permission update failed:", error);
+        showToast("Could not update permission.", "error");
+      }
+    }
+
+    function applyRoomSnapshot(snapshot) {
+      roomState.roomCode = snapshot.code;
+      roomState.role = snapshot.yourRole;
+      roomState.canEdit = !!snapshot.canEdit;
+      roomState.members = snapshot.members || [];
+      roomState.joinUrl = buildJoinUrl(snapshot.code);
+      document.getElementById("roomCode").value = snapshot.code;
+      roomState.applyingRemote = true;
+      try {
+        if (snapshot.gameState) {
+          gameState = normalizeState(snapshot.gameState);
+          syncRuleInputs();
+        }
+        refreshAll({ skipRemote: true });
+      } finally {
+        roomState.applyingRemote = false;
+      }
+    }
+
+    function queueSync() {
+      if (!roomState.roomCode || !roomState.canEdit || roomState.applyingRemote) return;
+      clearTimeout(roomState.syncTimer);
+      roomState.syncTimer = setTimeout(pushStateToRoom, 150);
+    }
+
+    async function pushStateToRoom() {
+      if (!roomState.roomCode || !roomState.canEdit) return;
+      try {
+        const response = await fetch(`/api/rooms/${roomState.roomCode}/update`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            sessionId: roomState.sessionId,
+            collaboratorName: roomState.name,
+            gameState
+          })
+        });
+        const snapshot = await readApiResponse(response);
+        if (!response.ok) return showToast(snapshot.error || "Could not sync room.", "error");
+        applyRoomSnapshot(snapshot);
+      } catch (error) {
+        console.error("Room sync failed:", error);
+        showToast("Could not sync room.", "error");
+      }
+    }
+
+    async function readApiResponse(response) {
+      const text = await response.text();
+      if (!text) return {};
+      try {
+        return JSON.parse(text);
+      } catch (error) {
+        console.error("Unexpected server response:", text);
+        throw new Error("Unexpected server response");
+      }
+    }
+
+    function buildJoinUrl(roomCode) {
+      if (!roomCode) return "";
+      const localHost = ["localhost", "127.0.0.1"].includes(window.location.hostname);
+      const base = localHost && roomState.serverInfo.addresses.length
+        ? `http://${roomState.serverInfo.addresses[0]}:${roomState.serverInfo.port || 3000}`
+        : window.location.origin;
+      return `${base}/?room=${encodeURIComponent(roomCode)}`;
+    }
+
+    function updateQuery(roomCode) {
+      const url = new URL(window.location.href);
+      if (roomCode) url.searchParams.set("room", roomCode);
+      else url.searchParams.delete("room");
+      window.history.replaceState({}, "", url.toString());
+    }
+
+    async function copyJoinLink() {
+      if (!roomState.joinUrl) return;
+      try {
+        await navigator.clipboard.writeText(roomState.joinUrl);
+        showToast("Join link copied.");
+      } catch (error) {
+        showToast("Could not copy link.", "error");
+      }
+    }
+
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function sum(values) {
+      return values.reduce((acc, value) => acc + value, 0);
+    }
+
+    function swap(array, a, b) {
+      const temp = array[a];
+      array[a] = array[b];
+      array[b] = temp;
+    }
+
+    function makeId(prefix) {
+      return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+    }
+
+    function capitalize(value) {
+      const text = String(value || "");
+      return text ? text[0].toUpperCase() + text.slice(1) : "";
+    }
+
+    function formatSeen(value) {
+      if (!value) return "just now";
+      const seconds = Math.max(0, Math.floor((Date.now() - new Date(value).getTime()) / 1000));
+      if (seconds < 10) return "just now";
+      if (seconds < 60) return `${seconds}s ago`;
+      if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
+      return `${Math.floor(seconds / 3600)}h ago`;
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#39;");
+    }
+
+    function showToast(message, kind) {
+      const toast = document.createElement("div");
+      toast.className = `toast${kind === "error" ? " error" : kind === "warn" ? " warn" : ""}`;
+      toast.textContent = message;
+      document.body.appendChild(toast);
+      setTimeout(() => {
+        if (toast.parentNode) toast.parentNode.removeChild(toast);
+      }, 2600);
+    }
+  </script>
+</body>
+</html>

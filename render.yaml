@@ -4,6 +4,6 @@ services:
     env: node
     plan: free
     buildCommand: ""
-    startCommand: "node server.js"
+    startCommand: "node fixed-server-v3.js"
     healthCheckPath: "/api/health"
     autoDeploy: true
