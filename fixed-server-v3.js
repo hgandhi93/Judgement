@@ -114,21 +114,52 @@ function decodeBundledHtml(encoded) {
   throw new Error("Could not decode bundled frontend");
 }
 
+function repairServedHtml(html) {
+  let repaired = String(html || "");
+
+  repaired = repaired.replace(
+    'path: "M12 2l3.09 6.26L22 9l-5 4.87L18.18 22 12 18.77 5.82 22 7 13.87 2 9l6.91-.74L12 2z"',
+    'path: "M12 2C8.4 6.6 4 9.1 4 13a5 5 0 0 0 5 5c1.25 0 2.33-.42 3-1.18V20H9v2h6v-2h-3v-3.18c.67.76 1.75 1.18 3 1.18a5 5 0 0 0 5-5c0-3.9-4.4-6.4-8-11z"'
+  );
+
+  repaired = repaired.replace(
+    'path: "M12 2l4.5 6.5L22 12l-5.5 4-4.5 6.5L7.5 16 2 12l4.5-6.5L12 2z"',
+    'path: "M12 2L19 12 12 22 5 12Z"'
+  );
+
+  repaired = repaired.replace(
+    'path: "M12 2C9.5 2 7.5 4 7.5 6.5c0 1.58.81 2.97 2.06 3.81-.25.44-.56.86-.56 1.69 0 2.25 2.25 4 5 4s5-1.75 5-4c0-.83-.31-1.25-.56-1.69C19.69 9.47 20.5 8.08 20.5 6.5 20.5 4 18.5 2 16 2c-1 0-1.88.38-2.56 1C12.88 2.38 12 2 12 2z"',
+    'path: "M12 2a4 4 0 0 0-4 4c0 .77.22 1.5.6 2.12A4.7 4.7 0 0 0 4 12.5C4 15 6 17 8.5 17c.83 0 1.62-.22 2.3-.63V20H8v2h8v-2h-2.8v-3.63c.68.41 1.47.63 2.3.63 2.5 0 4.5-2 4.5-4.5A4.7 4.7 0 0 0 15.4 8.12 3.97 3.97 0 0 0 16 6a4 4 0 0 0-4-4z"'
+  );
+
+  repaired = repaired.replace(
+    'path: "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"',
+    'path: "M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 2a7.95 7.95 0 0 1 5.65 2.35L6.35 17.65A8 8 0 0 1 12 4zm0 16a7.95 7.95 0 0 1-5.65-2.35L17.65 6.35A8 8 0 0 1 12 20z"'
+  );
+
+  repaired = repaired.replace(
+    'function renderPredictionGrid() {\n      const editable = canEdit() && gameState.hasStarted && gameState.roundPhase === "bidding";\n      const grid = document.getElementById("predictionsGrid");',
+    'function renderPredictionGrid() {\n      const editable = canEdit() && gameState.hasStarted && gameState.roundPhase === "bidding";\n      const cardCount = getCurrentCardCount();\n      const grid = document.getElementById("predictionsGrid");'
+  );
+
+  return repaired;
+}
+
 function readAppHtml() {
-  if (fs.existsSync(LIVE_V3_FILE)) return fs.readFileSync(LIVE_V3_FILE, "utf8");
-  if (fs.existsSync(LIVE_FILE)) return fs.readFileSync(LIVE_FILE, "utf8");
+  if (fs.existsSync(LIVE_V3_FILE)) return repairServedHtml(fs.readFileSync(LIVE_V3_FILE, "utf8"));
+  if (fs.existsSync(LIVE_FILE)) return repairServedHtml(fs.readFileSync(LIVE_FILE, "utf8"));
 
   if (fs.existsSync(LIVE_BASE64_FILE)) {
     const html = decodePlainBase64(fs.readFileSync(LIVE_BASE64_FILE, "utf8"));
-    if (looksLikeHtml(html)) return html;
+    if (looksLikeHtml(html)) return repairServedHtml(html);
     throw new Error("Could not decode live frontend");
   }
 
   if (fs.existsSync(BUNDLED_HTML_FILE)) {
-    return decodeBundledHtml(fs.readFileSync(BUNDLED_HTML_FILE, "utf8"));
+    return repairServedHtml(decodeBundledHtml(fs.readFileSync(BUNDLED_HTML_FILE, "utf8")));
   }
 
-  return fs.readFileSync(INDEX_FILE, "utf8");
+  return repairServedHtml(fs.readFileSync(INDEX_FILE, "utf8"));
 }
 
 function getRoom(code) {
