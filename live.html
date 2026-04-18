@@ -1,0 +1,1418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Judgment Live Scorekeeper</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: "Segoe UI", Tahoma, sans-serif;
+      background: linear-gradient(180deg, #081120, #11243f 45%, #091321);
+      color: #eef7ff;
+      min-height: 100vh;
+    }
+
+    .wrap { max-width: 1180px; margin: 0 auto; padding: 16px 16px 48px; }
+
+    .hero,
+    .card {
+      background: rgba(10, 22, 40, 0.82);
+      border: 1px solid rgba(119, 212, 255, 0.18);
+      border-radius: 20px;
+      box-shadow: 0 18px 36px rgba(0, 0, 0, 0.28);
+      backdrop-filter: blur(12px);
+    }
+
+    .hero { padding: 22px; margin-bottom: 18px; }
+    .hero h1 { font-size: 34px; margin-bottom: 8px; }
+    .hero p { color: rgba(232, 244, 255, 0.78); }
+
+    .layout { display: grid; gap: 18px; }
+    .grid-2 { display: grid; gap: 18px; }
+
+    .card { padding: 18px; }
+    .card h2 { font-size: 22px; margin-bottom: 14px; }
+    .card h3 { font-size: 18px; margin-bottom: 10px; }
+
+    .row,
+    .toolbar,
+    .chips,
+    .actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .toolbar { margin-top: 12px; }
+    .actions { margin-top: 14px; }
+
+    .input,
+    .select,
+    .number {
+      width: 100%;
+      border: 1px solid rgba(119, 212, 255, 0.22);
+      background: rgba(255, 255, 255, 0.05);
+      color: #eef7ff;
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-size: 15px;
+    }
+
+    .number { max-width: 110px; }
+
+    .btn {
+      border: none;
+      border-radius: 12px;
+      padding: 12px 16px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      background: linear-gradient(135deg, #44d6df, #4d85ff);
+      color: #07111e;
+    }
+
+    .btn:disabled {
+      cursor: not-allowed;
+      opacity: 0.45;
+    }
+
+    .btn.alt {
+      background: linear-gradient(135deg, #ffd257, #ff8e63);
+      color: #2d1400;
+    }
+
+    .btn.danger {
+      background: linear-gradient(135deg, #ff7f7f, #f14343);
+      color: #fff;
+    }
+
+    .chip {
+      border-radius: 999px;
+      padding: 8px 12px;
+      font-size: 13px;
+      font-weight: 700;
+      background: rgba(119, 212, 255, 0.14);
+      border: 1px solid rgba(119, 212, 255, 0.2);
+    }
+
+    .chip.warn {
+      background: rgba(255, 210, 87, 0.14);
+      border-color: rgba(255, 210, 87, 0.25);
+      color: #ffe498;
+    }
+
+    .notice {
+      margin-top: 12px;
+      padding: 12px 14px;
+      border-radius: 12px;
+      background: rgba(255, 210, 87, 0.1);
+      border: 1px solid rgba(255, 210, 87, 0.22);
+      color: #ffe498;
+      font-weight: 600;
+    }
+
+    .players,
+    .members,
+    .history {
+      display: grid;
+      gap: 10px;
+    }
+
+    .player-row,
+    .member-row,
+    .history-row {
+      display: grid;
+      gap: 10px;
+      align-items: center;
+      border: 1px solid rgba(119, 212, 255, 0.14);
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.03);
+      padding: 12px;
+    }
+
+    .player-row { grid-template-columns: minmax(0, 1fr) auto auto; }
+    .member-row { grid-template-columns: minmax(0, 1fr) auto; }
+
+    .dealer {
+      color: #ffe498;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .round-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .round-badge {
+      background: linear-gradient(135deg, #4d85ff, #44d6df);
+      color: #06111e;
+      border-radius: 999px;
+      padding: 12px 18px;
+      font-weight: 800;
+    }
+
+    .dealer-badge {
+      border-radius: 999px;
+      padding: 10px 16px;
+      background: rgba(255, 210, 87, 0.14);
+      color: #ffe498;
+      border: 1px solid rgba(255, 210, 87, 0.24);
+      font-weight: 800;
+    }
+
+    .grid-players {
+      display: grid;
+      gap: 12px;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    }
+
+    .score-box {
+      border: 1px solid rgba(119, 212, 255, 0.16);
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.03);
+      padding: 14px;
+      text-align: center;
+    }
+
+    .score-box label {
+      display: block;
+      margin-bottom: 10px;
+      font-weight: 700;
+    }
+
+    .counter {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .count-btn {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      border: none;
+      font-size: 20px;
+      font-weight: 800;
+      cursor: pointer;
+      background: linear-gradient(135deg, #44d6df, #4d85ff);
+      color: #07111e;
+    }
+
+    .count-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .count-value {
+      width: 58px;
+      height: 58px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      border: 2px solid rgba(119, 212, 255, 0.25);
+      font-size: 24px;
+      font-weight: 800;
+    }
+
+    .sum {
+      margin: 12px 0;
+      padding: 12px 14px;
+      text-align: center;
+      border-radius: 12px;
+      background: rgba(68, 214, 223, 0.12);
+      border: 1px solid rgba(68, 214, 223, 0.2);
+      font-weight: 700;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      overflow: hidden;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    th,
+    td {
+      padding: 12px 10px;
+      border-bottom: 1px solid rgba(119, 212, 255, 0.12);
+      text-align: center;
+      font-size: 14px;
+    }
+
+    th { background: rgba(119, 212, 255, 0.1); }
+
+    .qr-wrap { text-align: center; }
+    .qr-wrap img {
+      width: 220px;
+      max-width: 100%;
+      border-radius: 14px;
+      background: #fff;
+      padding: 12px;
+    }
+
+    .link-box {
+      margin-top: 12px;
+      padding: 12px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(119, 212, 255, 0.14);
+      word-break: break-word;
+      color: rgba(232, 244, 255, 0.82);
+    }
+
+    .toast {
+      position: fixed;
+      right: 18px;
+      top: 18px;
+      z-index: 30;
+      padding: 14px 16px;
+      border-radius: 12px;
+      color: #fff;
+      font-weight: 700;
+      background: linear-gradient(135deg, #2fb16d, #21834e);
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.22);
+    }
+
+    .toast.error { background: linear-gradient(135deg, #f35d5d, #b22727); }
+    .toast.warn { background: linear-gradient(135deg, #ffb04d, #d87819); }
+
+    @media (min-width: 900px) {
+      .layout { grid-template-columns: 1.1fr 0.9fr; }
+      .grid-2 { grid-template-columns: 1fr 1fr; }
+    }
+
+    @media (max-width: 720px) {
+      .player-row,
+      .member-row {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <section class="hero">
+      <h1>Judgment Live Scorekeeper</h1>
+      <p>Room codes, QR sharing, live viewers, editor permissions, dealer tracking, and seating order changes.</p>
+      <div class="chips" style="margin-top: 14px;">
+        <span class="chip" id="roomChip">Offline Mode</span>
+        <span class="chip" id="roleChip">Offline Admin</span>
+        <span class="chip" id="syncChip">Local Only</span>
+      </div>
+    </section>
+
+    <div class="layout">
+      <div>
+        <section class="card">
+          <h2>Live Room</h2>
+          <div class="grid-2">
+            <div>
+              <label for="displayName">Your Name</label>
+              <input id="displayName" class="input" placeholder="Harsh, Table 1, Scorekeeper..." />
+            </div>
+            <div>
+              <label for="roomCode">Room Code</label>
+              <input id="roomCode" class="input" maxlength="6" placeholder="ABC123" />
+            </div>
+          </div>
+          <div class="toolbar">
+            <button class="btn" id="createRoomBtn">Create Room</button>
+            <button class="btn" id="joinRoomBtn">Join Room</button>
+            <button class="btn alt" id="leaveRoomBtn" style="display:none;">Leave Room</button>
+            <button class="btn" id="copyLinkBtn" style="display:none;">Copy Join Link</button>
+          </div>
+          <div class="notice" id="permissionBanner" style="display:none;"></div>
+        </section>
+
+        <section class="card">
+          <h2>Game Setup</h2>
+          <div class="row" style="margin-bottom: 12px;">
+            <label for="numDecks">Decks</label>
+            <input id="numDecks" class="number" type="number" min="1" max="4" value="1" data-edit />
+            <label for="missPenalty">Miss Penalty</label>
+            <select id="missPenalty" class="select" style="max-width: 220px;" data-edit>
+              <option value="zero">Zero Points</option>
+              <option value="difference">Minus Difference</option>
+            </select>
+          </div>
+          <div class="row" style="margin-bottom: 12px;">
+            <label><input id="allowEqualPredictions" type="checkbox" data-edit /> Allow Equal Predictions</label>
+            <label><input id="streakBonus" type="checkbox" checked data-edit /> Streak Bonus</label>
+          </div>
+          <div class="row">
+            <label><input type="radio" name="scoringMode" value="classic" checked data-edit /> Classic</label>
+            <label><input type="radio" name="scoringMode" value="alt" data-edit /> Alternative</label>
+          </div>
+          <div class="actions">
+            <button class="btn" id="addPlayerBtn" data-edit>Add Player</button>
+            <button class="btn" id="startGameBtn" data-edit>Start Game</button>
+            <button class="btn alt" id="undoRoundBtn" data-edit>Undo Round</button>
+            <button class="btn danger" id="resetGameBtn" data-edit>Reset Game</button>
+          </div>
+        </section>
+
+        <section class="card">
+          <h2>Players</h2>
+          <div class="players" id="playersContainer"></div>
+        </section>
+
+        <section class="card" id="roundCard">
+          <div class="round-top">
+            <div class="round-badge" id="roundLabel">Round 1 • 1 card</div>
+            <div class="dealer-badge" id="dealerLabel">Dealer: -</div>
+            <div class="chip" id="trumpLabel">Trump: Spade</div>
+          </div>
+          <div id="warningArea"></div>
+
+          <h3>Predictions</h3>
+          <div class="sum" id="predictionSum">Sum: 0 / 1</div>
+          <div class="grid-players" id="predictionsGrid"></div>
+          <div class="actions">
+            <button class="btn" id="confirmPredictionsBtn" data-edit>Confirm Predictions</button>
+          </div>
+
+          <div id="wonSection" style="display:none; margin-top: 18px;">
+            <h3>Tricks Won</h3>
+            <div class="sum" id="wonSum">Sum: 0 / 1</div>
+            <div class="grid-players" id="wonGrid"></div>
+            <div class="actions">
+              <button class="btn" id="closeRoundBtn" data-edit>Close Round</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="card">
+          <h2>Scoreboard</h2>
+          <div style="overflow-x:auto;">
+            <table>
+              <thead>
+                <tr>
+                  <th>Rank</th>
+                  <th>Player</th>
+                  <th>Bid</th>
+                  <th>Won</th>
+                  <th>Pts</th>
+                  <th>Streak</th>
+                  <th>Total</th>
+                </tr>
+              </thead>
+              <tbody id="scoreboardBody"></tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+
+      <div>
+        <section class="card">
+          <h2>Connected People</h2>
+          <div class="members" id="membersContainer"></div>
+        </section>
+
+        <section class="card">
+          <h2>Share Room</h2>
+          <div class="qr-wrap">
+            <div id="qrArea"></div>
+            <div class="link-box" id="linkBox">Create a room to show a QR code and join link.</div>
+          </div>
+        </section>
+
+        <section class="card">
+          <h2>Recent Rounds</h2>
+          <div class="history" id="historyContainer">
+            <div class="history-row">No rounds played yet.</div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const STORAGE = {
+      game: "judgment_live_state",
+      session: "judgment_live_session",
+      name: "judgment_live_name"
+    };
+
+    const TRUMPS = ["Spade", "Diamond", "Club", "Heart", "No Trump"];
+
+    let gameState = createDefaultGameState();
+    const roomState = {
+      sessionId: getSessionId(),
+      roomCode: null,
+      joinUrl: "",
+      name: "",
+      role: "offline-admin",
+      canEdit: true,
+      members: [],
+      serverInfo: { addresses: [], port: null },
+      eventSource: null,
+      reconnectTimer: null,
+      presenceTimer: null,
+      syncTimer: null,
+      applyingRemote: false
+    };
+
+    document.addEventListener("DOMContentLoaded", init);
+
+    function init() {
+      try {
+        loadLocalState();
+        bindEvents();
+        refreshAll();
+        loadServerInfo().then(maybeJoinFromUrl);
+      } catch (error) {
+        console.error("App initialization failed:", error);
+        showToast("The page hit a startup error. Reload once and try again.", "error");
+      }
+    }
+
+    function createDefaultGameState() {
+      return {
+        players: [],
+        rules: {
+          numDecks: 1,
+          missPenalty: "zero",
+          allowEqualPredictions: false,
+          streakBonus: true,
+          streakStep: 5,
+          bonusPoints: 10,
+          scoringMode: "classic"
+        },
+        roundIndex: 0,
+        maxCards: 1,
+        currentCardCount: 1,
+        cycleDirection: 1,
+        trumpIndex: 0,
+        rounds: [],
+        currentBids: [],
+        currentWon: [],
+        streakCounters: [],
+        roundPhase: "bidding",
+        gameEnded: false
+      };
+    }
+
+    function normalizeState(value) {
+      const base = createDefaultGameState();
+      const merged = {
+        ...base,
+        ...(value || {}),
+        rules: { ...base.rules, ...((value && value.rules) || {}) }
+      };
+      if (!Array.isArray(merged.players)) merged.players = [];
+      if (!Array.isArray(merged.rounds)) merged.rounds = [];
+      if (!Array.isArray(merged.currentBids)) merged.currentBids = [];
+      if (!Array.isArray(merged.currentWon)) merged.currentWon = [];
+      if (!Array.isArray(merged.streakCounters)) merged.streakCounters = [];
+      if (!merged.roundPhase) merged.roundPhase = "bidding";
+      return merged;
+    }
+
+    function getSessionId() {
+      let id = localStorage.getItem(STORAGE.session);
+      if (!id) {
+        id = `session_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+        localStorage.setItem(STORAGE.session, id);
+      }
+      return id;
+    }
+
+    function loadLocalState() {
+      try {
+        const saved = localStorage.getItem(STORAGE.game);
+        if (saved) gameState = normalizeState(JSON.parse(saved));
+      } catch (error) {
+        console.warn("Could not load local game state:", error);
+      }
+
+      roomState.name = localStorage.getItem(STORAGE.name) || "";
+      document.getElementById("displayName").value = roomState.name;
+      syncRuleInputs();
+
+      if (gameState.players.length === 0) {
+        for (let i = 0; i < 3; i++) {
+          gameState.players.push({ id: makeId("p"), name: "" });
+        }
+      }
+    }
+
+    function bindEvents() {
+      document.getElementById("displayName").addEventListener("input", (event) => {
+        roomState.name = event.target.value.trim();
+        localStorage.setItem(STORAGE.name, roomState.name);
+      });
+
+      document.getElementById("roomCode").addEventListener("input", (event) => {
+        event.target.value = event.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6);
+      });
+
+      document.getElementById("createRoomBtn").addEventListener("click", createRoom);
+      document.getElementById("joinRoomBtn").addEventListener("click", joinRoom);
+      document.getElementById("leaveRoomBtn").addEventListener("click", leaveRoom);
+      document.getElementById("copyLinkBtn").addEventListener("click", copyJoinLink);
+
+      document.getElementById("addPlayerBtn").addEventListener("click", addPlayer);
+      document.getElementById("startGameBtn").addEventListener("click", startGame);
+      document.getElementById("undoRoundBtn").addEventListener("click", undoRound);
+      document.getElementById("resetGameBtn").addEventListener("click", resetGame);
+      document.getElementById("confirmPredictionsBtn").addEventListener("click", confirmPredictions);
+      document.getElementById("closeRoundBtn").addEventListener("click", closeRound);
+
+      document.getElementById("numDecks").addEventListener("change", updateRules);
+      document.getElementById("missPenalty").addEventListener("change", updateRules);
+      document.getElementById("allowEqualPredictions").addEventListener("change", updateRules);
+      document.getElementById("streakBonus").addEventListener("change", updateRules);
+      document.querySelectorAll("input[name='scoringMode']").forEach((radio) => {
+        radio.addEventListener("change", updateRules);
+      });
+
+      window.addEventListener("beforeunload", () => {
+        if (!roomState.roomCode) return;
+        navigator.sendBeacon(
+          `/api/rooms/${roomState.roomCode}/leave`,
+          JSON.stringify({ sessionId: roomState.sessionId })
+        );
+      });
+    }
+
+    function syncRuleInputs() {
+      document.getElementById("numDecks").value = gameState.rules.numDecks || 1;
+      document.getElementById("missPenalty").value = gameState.rules.missPenalty || "zero";
+      document.getElementById("allowEqualPredictions").checked = !!gameState.rules.allowEqualPredictions;
+      document.getElementById("streakBonus").checked = gameState.rules.streakBonus !== false;
+      document.querySelectorAll("input[name='scoringMode']").forEach((radio) => {
+        radio.checked = radio.value === (gameState.rules.scoringMode || "classic");
+      });
+    }
+
+    async function loadServerInfo() {
+      try {
+        const response = await fetch("/api/server-info");
+        if (!response.ok) return;
+        roomState.serverInfo = await response.json();
+      } catch (error) {
+        console.warn("Server info failed:", error);
+      }
+    }
+
+    function maybeJoinFromUrl() {
+      const params = new URLSearchParams(window.location.search);
+      const room = params.get("room");
+      if (!room) return;
+      document.getElementById("roomCode").value = room.toUpperCase();
+      if (roomState.name) joinRoom();
+      else showToast("Add your name, then tap Join Room.", "warn");
+    }
+
+    function refreshAll() {
+      saveLocalGame();
+      safely("renderRoomState", renderRoomState);
+      safely("renderPlayers", renderPlayers);
+      safely("renderMembers", renderMembers);
+      safely("renderRound", renderRound);
+      safely("renderScoreboard", renderScoreboard);
+      safely("renderHistory", renderHistory);
+      safely("renderShare", renderShare);
+      safely("syncEditControls", syncEditControls);
+    }
+
+    function saveLocalGame(skipRemote) {
+      localStorage.setItem(STORAGE.game, JSON.stringify(gameState));
+      if (!skipRemote) queueSync();
+    }
+
+    function canEdit() {
+      return !roomState.roomCode || roomState.canEdit;
+    }
+
+    function ensureEditable(action) {
+      if (canEdit()) return true;
+      showToast(`Read-only mode: ask the admin for edit access to ${action}.`, "warn");
+      return false;
+    }
+
+    function syncEditControls() {
+      const editable = canEdit();
+      document.querySelectorAll("[data-edit]").forEach((element) => {
+        element.disabled = !editable;
+      });
+
+      const banner = document.getElementById("permissionBanner");
+      if (roomState.roomCode && !editable) {
+        banner.style.display = "block";
+        banner.textContent = "You are connected in read-only mode. The admin can grant edit access from the Connected People section.";
+      } else if (roomState.roomCode && roomState.role === "editor") {
+        banner.style.display = "block";
+        banner.textContent = "You can edit this room because the admin granted editor access.";
+      } else {
+        banner.style.display = "none";
+      }
+    }
+
+    function renderRoomState() {
+      document.getElementById("roomChip").textContent = roomState.roomCode ? `Room ${roomState.roomCode}` : "Offline Mode";
+      document.getElementById("roleChip").textContent = roomState.roomCode ? capitalize(roomState.role) : "Offline Admin";
+      document.getElementById("syncChip").textContent = roomState.roomCode ? "Live Sync" : "Local Only";
+      document.getElementById("leaveRoomBtn").style.display = roomState.roomCode ? "inline-flex" : "none";
+      document.getElementById("copyLinkBtn").style.display = roomState.roomCode ? "inline-flex" : "none";
+    }
+
+    function renderPlayers() {
+      const container = document.getElementById("playersContainer");
+      const editable = canEdit();
+      container.innerHTML = "";
+
+      gameState.players.forEach((player, index) => {
+        const row = document.createElement("div");
+        row.className = "player-row";
+        const dealer = isGameStarted() && getDealerIndex() === index ? '<div class="dealer">Dealer</div>' : "";
+        row.innerHTML = `
+          <div>
+            <input class="input" value="${escapeHtml(player.name)}" placeholder="Player ${index + 1}" ${editable ? "" : "disabled"} />
+            ${dealer}
+          </div>
+          <div class="actions" style="margin-top:0;">
+            <button class="btn" ${editable ? "" : "disabled"}>Seat Up</button>
+            <button class="btn" ${editable ? "" : "disabled"}>Seat Down</button>
+          </div>
+          <div class="actions" style="margin-top:0;">
+            <button class="btn danger" ${editable ? "" : "disabled"}>Remove</button>
+          </div>
+        `;
+
+        const input = row.querySelector("input");
+        input.addEventListener("input", (event) => {
+          if (!ensureEditable("rename players")) return;
+          player.name = event.target.value.trim();
+          saveLocalGame();
+        });
+
+        row.querySelectorAll("button")[0].addEventListener("click", () => moveSeat(index, -1));
+        row.querySelectorAll("button")[1].addEventListener("click", () => moveSeat(index, 1));
+        row.querySelectorAll("button")[2].addEventListener("click", () => removePlayer(player.id));
+        container.appendChild(row);
+      });
+    }
+
+    function renderMembers() {
+      const container = document.getElementById("membersContainer");
+      if (!roomState.roomCode || roomState.members.length === 0) {
+        container.innerHTML = '<div class="member-row"><div>No room connected yet.</div></div>';
+        return;
+      }
+
+      container.innerHTML = "";
+      roomState.members.forEach((member) => {
+        const row = document.createElement("div");
+        row.className = "member-row";
+        row.innerHTML = `
+          <div>
+            <div><strong>${escapeHtml(member.name)}</strong>${member.you ? " (You)" : ""}</div>
+            <div style="font-size:13px; color: rgba(232,244,255,0.72);">${capitalize(member.role)} • Seen ${formatSeen(member.lastSeen)}</div>
+          </div>
+          <div class="actions" style="margin-top:0;"></div>
+        `;
+
+        const actions = row.querySelector(".actions");
+        if (roomState.role === "admin" && !member.you && member.role !== "admin") {
+          if (member.role === "viewer") {
+            const btn = document.createElement("button");
+            btn.className = "btn";
+            btn.textContent = "Allow Edit";
+            btn.addEventListener("click", () => updateMemberRole(member.sessionId, "editor"));
+            actions.appendChild(btn);
+          } else {
+            const btn = document.createElement("button");
+            btn.className = "btn alt";
+            btn.textContent = "Read Only";
+            btn.addEventListener("click", () => updateMemberRole(member.sessionId, "viewer"));
+            actions.appendChild(btn);
+          }
+        }
+
+        container.appendChild(row);
+      });
+    }
+
+    function renderRound() {
+      const roundLabel = document.getElementById("roundLabel");
+      const dealerLabel = document.getElementById("dealerLabel");
+      const trumpLabel = document.getElementById("trumpLabel");
+      const warningArea = document.getElementById("warningArea");
+      const cardCount = getCurrentCardCount();
+
+      roundLabel.textContent = `Round ${gameState.roundIndex + 1} • ${cardCount} card${cardCount === 1 ? "" : "s"}`;
+      dealerLabel.textContent = `Dealer: ${gameState.players[getDealerIndex()]?.name || "-"}`;
+      trumpLabel.textContent = `Trump: ${TRUMPS[gameState.trumpIndex % TRUMPS.length]}`;
+
+      const warnings = [];
+      if (gameState.rules.streakBonus) {
+        computeStreaks().forEach((streak, index) => {
+          if (streak === gameState.rules.streakStep - 1) {
+            warnings.push(`${gameState.players[index].name || `Player ${index + 1}`} is 1 away from +${gameState.rules.bonusPoints}`);
+          }
+        });
+      }
+      warningArea.innerHTML = warnings.map((warning) => `<div class="notice">${escapeHtml(warning)}</div>`).join("");
+
+      renderPredictionGrid();
+      renderWonGrid();
+    }
+
+    function renderPredictionGrid() {
+      const editable = canEdit() && gameState.roundPhase === "bidding";
+      const grid = document.getElementById("predictionsGrid");
+      grid.innerHTML = "";
+
+      gameState.players.forEach((player, index) => {
+        const box = document.createElement("div");
+        box.className = "score-box";
+        box.innerHTML = `
+          <label>${escapeHtml(player.name || `Player ${index + 1}`)}</label>
+          <div class="counter">
+            <button class="count-btn" ${editable ? "" : "disabled"}>−</button>
+            <div class="count-value">${gameState.currentBids[index] || 0}</div>
+            <button class="count-btn" ${editable ? "" : "disabled"}>+</button>
+          </div>
+        `;
+        const buttons = box.querySelectorAll("button");
+        buttons[0].addEventListener("click", () => changeBid(index, -1));
+        buttons[1].addEventListener("click", () => changeBid(index, 1));
+        grid.appendChild(box);
+      });
+
+      document.getElementById("predictionSum").textContent = `Sum: ${sum(gameState.currentBids)} / ${getCurrentCardCount()}`;
+      document.getElementById("confirmPredictionsBtn").style.display = gameState.roundPhase === "bidding" ? "inline-flex" : "none";
+    }
+
+    function renderWonGrid() {
+      const editable = canEdit() && gameState.roundPhase === "results";
+      const grid = document.getElementById("wonGrid");
+      grid.innerHTML = "";
+
+      gameState.players.forEach((player, index) => {
+        const box = document.createElement("div");
+        box.className = "score-box";
+        box.innerHTML = `
+          <label>${escapeHtml(player.name || `Player ${index + 1}`)}</label>
+          <div class="counter">
+            <button class="count-btn" ${editable ? "" : "disabled"}>−</button>
+            <div class="count-value">${gameState.currentWon[index] || 0}</div>
+            <button class="count-btn" ${editable ? "" : "disabled"}>+</button>
+          </div>
+        `;
+        const buttons = box.querySelectorAll("button");
+        buttons[0].addEventListener("click", () => changeWon(index, -1));
+        buttons[1].addEventListener("click", () => changeWon(index, 1));
+        grid.appendChild(box);
+      });
+
+      document.getElementById("wonSection").style.display = gameState.roundPhase === "results" ? "block" : "none";
+      document.getElementById("wonSum").textContent = `Sum: ${sum(gameState.currentWon)} / ${getCurrentCardCount()}`;
+      document.getElementById("closeRoundBtn").disabled = !editable || sum(gameState.currentWon) !== getCurrentCardCount();
+    }
+
+    function renderScoreboard() {
+      const body = document.getElementById("scoreboardBody");
+      if (gameState.rounds.length === 0) {
+        body.innerHTML = '<tr><td colspan="7">No rounds yet.</td></tr>';
+        return;
+      }
+
+      const totals = computeTotals();
+      const streaks = computeStreaks();
+      const lastRound = gameState.rounds[gameState.rounds.length - 1];
+      const order = totals.map((value, index) => index).sort((a, b) => totals[b] - totals[a]);
+
+      body.innerHTML = order.map((index, rank) => `
+        <tr>
+          <td>${rank + 1}</td>
+          <td>${escapeHtml(gameState.players[index].name || `Player ${index + 1}`)}</td>
+          <td>${lastRound.bids[index]}</td>
+          <td>${lastRound.won[index]}</td>
+          <td>${lastRound.scores[index]}</td>
+          <td>${streaks[index]}</td>
+          <td><strong>${totals[index]}</strong></td>
+        </tr>
+      `).join("");
+    }
+
+    function renderHistory() {
+      const container = document.getElementById("historyContainer");
+      if (gameState.rounds.length === 0) {
+        container.innerHTML = '<div class="history-row">No rounds played yet.</div>';
+        return;
+      }
+
+      container.innerHTML = gameState.rounds.slice(-6).reverse().map((round) => {
+        const details = gameState.players.map((player, index) => (
+          `${player.name || `Player ${index + 1}`}: ${round.bids[index]}/${round.won[index]} (${round.scores[index]})`
+        )).join(", ");
+        return `
+          <div class="history-row">
+            <strong>Round ${round.roundNumber}</strong>
+            <div>${round.cardCount} cards • ${TRUMPS[round.trumpIndex || 0] || round.trump || "-"}</div>
+            <div style="font-size:13px; color: rgba(232,244,255,0.76);">${escapeHtml(details)}</div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function renderShare() {
+      const qrArea = document.getElementById("qrArea");
+      const linkBox = document.getElementById("linkBox");
+      if (!roomState.joinUrl) {
+        qrArea.innerHTML = "";
+        linkBox.textContent = "Create a room to show a QR code and join link.";
+        return;
+      }
+
+      const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(roomState.joinUrl)}`;
+      qrArea.innerHTML = `<img src="${qrUrl}" alt="Room QR code" />`;
+      linkBox.textContent = `${roomState.joinUrl} | Room Code: ${roomState.roomCode}`;
+    }
+
+    function addPlayer() {
+      if (!ensureEditable("add players")) return;
+      if (gameState.players.length >= 20) return showToast("Maximum 20 players allowed.", "error");
+      gameState.players.push({ id: makeId("p"), name: "" });
+      refreshAll();
+    }
+
+    function removePlayer(playerId) {
+      if (!ensureEditable("remove players")) return;
+      if (gameState.players.length <= 3) return showToast("Minimum 3 players required.", "error");
+      gameState.players = gameState.players.filter((player) => player.id !== playerId);
+      refreshAll();
+    }
+
+    function moveSeat(index, step) {
+      if (!ensureEditable("change seating order")) return;
+      const target = index + step;
+      if (target < 0 || target >= gameState.players.length) return;
+      swap(gameState.players, index, target);
+      swap(gameState.currentBids, index, target);
+      swap(gameState.currentWon, index, target);
+      swap(gameState.streakCounters, index, target);
+      gameState.rounds.forEach((round) => {
+        swap(round.bids, index, target);
+        swap(round.won, index, target);
+        swap(round.scores, index, target);
+      });
+      refreshAll();
+    }
+
+    function updateRules() {
+      if (!ensureEditable("change rules")) return;
+      gameState.rules.numDecks = parseInt(document.getElementById("numDecks").value, 10) || 1;
+      gameState.rules.missPenalty = document.getElementById("missPenalty").value;
+      gameState.rules.allowEqualPredictions = document.getElementById("allowEqualPredictions").checked;
+      gameState.rules.streakBonus = document.getElementById("streakBonus").checked;
+      gameState.rules.scoringMode = document.querySelector("input[name='scoringMode']:checked").value;
+      saveLocalGame();
+    }
+
+    function startGame() {
+      if (!ensureEditable("start the game")) return;
+
+      const validPlayers = gameState.players.filter((player) => player.name.trim());
+      if (validPlayers.length < 3) return showToast("Name at least 3 players before starting.", "error");
+      const names = validPlayers.map((player) => player.name.trim().toLowerCase());
+      if (new Set(names).size !== names.length) return showToast("Player names must be unique.", "error");
+
+      gameState.players = validPlayers;
+      const totalCards = 52 * gameState.rules.numDecks;
+      gameState.maxCards = Math.max(1, Math.floor(totalCards / gameState.players.length));
+      gameState.roundIndex = 0;
+      gameState.currentCardCount = 1;
+      gameState.cycleDirection = 1;
+      gameState.trumpIndex = 0;
+      gameState.rounds = [];
+      gameState.currentBids = new Array(gameState.players.length).fill(0);
+      gameState.currentWon = new Array(gameState.players.length).fill(0);
+      gameState.streakCounters = new Array(gameState.players.length).fill(0);
+      gameState.roundPhase = "bidding";
+      gameState.gameEnded = false;
+      refreshAll();
+      showToast("Game started.");
+    }
+
+    function resetGame() {
+      if (!ensureEditable("reset the game")) return;
+      if (!confirm("Reset the game and clear all rounds?")) return;
+      const keepPlayers = gameState.players.map((player) => ({ ...player }));
+      const keepRules = { ...gameState.rules };
+      gameState = normalizeState({ players: keepPlayers, rules: keepRules });
+      refreshAll();
+      showToast("Game reset.", "warn");
+    }
+
+    function undoRound() {
+      if (!ensureEditable("undo the round")) return;
+      if (!gameState.rounds.length) return showToast("No rounds to undo.", "error");
+      if (!confirm("Undo the last round?")) return;
+
+      const removed = gameState.rounds.pop();
+      gameState.roundIndex = Math.max(0, gameState.roundIndex - 1);
+      gameState.trumpIndex = Math.max(0, gameState.trumpIndex - 1);
+      gameState.currentCardCount = removed.cardCount;
+      gameState.currentBids = [...removed.bids];
+      gameState.currentWon = new Array(gameState.players.length).fill(0);
+      gameState.roundPhase = "bidding";
+      gameState.gameEnded = false;
+      rebuildStreaks();
+      refreshAll();
+      showToast("Last round undone.", "warn");
+    }
+
+    function changeBid(index, delta) {
+      if (!ensureEditable("change bids")) return;
+      if (gameState.roundPhase !== "bidding") return;
+
+      const cardCount = getCurrentCardCount();
+      const dealerIndex = getDealerIndex();
+      let next = clamp((gameState.currentBids[index] || 0) + delta, 0, cardCount);
+
+      if (!gameState.rules.allowEqualPredictions && index === dealerIndex) {
+        const sumOthers = gameState.currentBids.reduce((acc, bid, bidIndex) => bidIndex === index ? acc : acc + bid, 0);
+        const forbidden = cardCount - sumOthers;
+        if (next === forbidden && forbidden >= 0 && forbidden <= cardCount) {
+          next = delta > 0 ? clamp(next + 1, 0, cardCount) : clamp(next - 1, 0, cardCount);
+          if (next === forbidden) {
+            showToast("Dealer cannot make total bids equal tricks.", "warn");
+            return;
+          }
+        }
+      }
+
+      gameState.currentBids[index] = next;
+      saveLocalGame();
+      renderRound();
+    }
+
+    function confirmPredictions() {
+      if (!ensureEditable("confirm predictions")) return;
+      if (!gameState.rules.allowEqualPredictions && sum(gameState.currentBids) === getCurrentCardCount()) {
+        return showToast("Prediction sum cannot equal total tricks.", "error");
+      }
+      gameState.roundPhase = "results";
+      saveLocalGame();
+      renderRound();
+    }
+
+    function changeWon(index, delta) {
+      if (!ensureEditable("change tricks won")) return;
+      if (gameState.roundPhase !== "results") return;
+      gameState.currentWon[index] = clamp((gameState.currentWon[index] || 0) + delta, 0, getCurrentCardCount());
+      saveLocalGame();
+      renderRound();
+    }
+
+    function closeRound() {
+      if (!ensureEditable("close the round")) return;
+      const cardCount = getCurrentCardCount();
+      if (sum(gameState.currentWon) !== cardCount) {
+        return showToast("Total tricks won must equal cards dealt.", "error");
+      }
+
+      const scores = gameState.players.map((player, index) => {
+        const bid = gameState.currentBids[index];
+        const won = gameState.currentWon[index];
+        let points = 0;
+
+        if (bid === won) {
+          points = gameState.rules.scoringMode === "alt" ? (bid === 0 ? 10 : 20 + bid) : 10 + won;
+          if (gameState.rules.streakBonus) {
+            gameState.streakCounters[index] = (gameState.streakCounters[index] || 0) + 1;
+            if (gameState.streakCounters[index] >= gameState.rules.streakStep) {
+              points += gameState.rules.bonusPoints;
+              gameState.streakCounters[index] = 0;
+            }
+          }
+        } else {
+          points = gameState.rules.missPenalty === "difference" ? -Math.abs(bid - won) : 0;
+          if (gameState.rules.streakBonus) gameState.streakCounters[index] = 0;
+        }
+
+        return points;
+      });
+
+      gameState.rounds.push({
+        roundNumber: gameState.roundIndex + 1,
+        cardCount,
+        trump: TRUMPS[gameState.trumpIndex % TRUMPS.length],
+        trumpIndex: gameState.trumpIndex % TRUMPS.length,
+        bids: [...gameState.currentBids],
+        won: [...gameState.currentWon],
+        scores
+      });
+
+      gameState.roundIndex += 1;
+      gameState.trumpIndex += 1;
+      if (gameState.currentCardCount >= gameState.maxCards) gameState.cycleDirection = -1;
+      else if (gameState.currentCardCount <= 1 && gameState.roundIndex > 0) gameState.cycleDirection = 1;
+
+      gameState.currentCardCount = clamp(
+        gameState.currentCardCount + gameState.cycleDirection,
+        1,
+        gameState.maxCards
+      );
+      gameState.currentBids = new Array(gameState.players.length).fill(0);
+      gameState.currentWon = new Array(gameState.players.length).fill(0);
+      gameState.roundPhase = "bidding";
+      saveLocalGame();
+      refreshAll();
+      showToast("Round saved.");
+    }
+
+    function computeTotals() {
+      const totals = new Array(gameState.players.length).fill(0);
+      gameState.rounds.forEach((round) => {
+        round.scores.forEach((score, index) => {
+          totals[index] += score;
+        });
+      });
+      return totals;
+    }
+
+    function computeStreaks() {
+      if (gameState.streakCounters.length === gameState.players.length) {
+        return gameState.streakCounters.slice();
+      }
+      const streaks = new Array(gameState.players.length).fill(0);
+      for (let playerIndex = 0; playerIndex < gameState.players.length; playerIndex++) {
+        for (let roundIndex = gameState.rounds.length - 1; roundIndex >= 0; roundIndex--) {
+          const round = gameState.rounds[roundIndex];
+          if (round.bids[playerIndex] === round.won[playerIndex]) streaks[playerIndex] += 1;
+          else break;
+        }
+      }
+      return streaks;
+    }
+
+    function rebuildStreaks() {
+      gameState.streakCounters = new Array(gameState.players.length).fill(0);
+      if (!gameState.rules.streakBonus) return;
+      gameState.rounds.forEach((round) => {
+        round.bids.forEach((bid, index) => {
+          if (bid === round.won[index]) {
+            gameState.streakCounters[index] += 1;
+            if (gameState.streakCounters[index] >= gameState.rules.streakStep) {
+              gameState.streakCounters[index] = 0;
+            }
+          } else {
+            gameState.streakCounters[index] = 0;
+          }
+        });
+      });
+    }
+
+    function getCurrentCardCount() {
+      return clamp(gameState.currentCardCount || 1, 1, Math.max(1, gameState.maxCards || 1));
+    }
+
+    function getDealerIndex() {
+      return gameState.players.length ? gameState.roundIndex % gameState.players.length : 0;
+    }
+
+    function isGameStarted() {
+      return gameState.players.length >= 3 && gameState.currentBids.length === gameState.players.length;
+    }
+
+    async function createRoom() {
+      if (!roomState.name) return showToast("Add your name before creating a room.", "warn");
+
+      try {
+        const response = await fetch("/api/rooms", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            sessionId: roomState.sessionId,
+            collaboratorName: roomState.name,
+            gameState
+          })
+        });
+        const snapshot = await readApiResponse(response);
+        if (!response.ok) return showToast(snapshot.error || "Could not create room.", "error");
+        applyRoomSnapshot(snapshot);
+        connectRoomEvents();
+        updateQuery(snapshot.code);
+        showToast(`Room ${snapshot.code} created.`);
+      } catch (error) {
+        console.error("Create room failed:", error);
+        showToast("Could not create room.", "error");
+      }
+    }
+
+    async function joinRoom() {
+      const code = document.getElementById("roomCode").value.trim().toUpperCase();
+      if (!code) return showToast("Enter a room code.", "warn");
+      if (!roomState.name) return showToast("Add your name before joining.", "warn");
+
+      try {
+        const response = await fetch(`/api/rooms/${code}/join`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            sessionId: roomState.sessionId,
+            collaboratorName: roomState.name
+          })
+        });
+        const snapshot = await readApiResponse(response);
+        if (!response.ok) return showToast(snapshot.error || "Could not join room.", "error");
+        applyRoomSnapshot(snapshot);
+        connectRoomEvents();
+        updateQuery(snapshot.code);
+        showToast(`Joined room ${snapshot.code}.`);
+      } catch (error) {
+        console.error("Join room failed:", error);
+        showToast("Could not join room.", "error");
+      }
+    }
+
+    async function leaveRoom() {
+      if (!roomState.roomCode) return;
+      const code = roomState.roomCode;
+      try {
+        await fetch(`/api/rooms/${code}/leave`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ sessionId: roomState.sessionId })
+        });
+      } catch (error) {
+        console.warn("Leave room failed:", error);
+      }
+
+      disconnectRoom();
+      roomState.roomCode = null;
+      roomState.joinUrl = "";
+      roomState.role = "offline-admin";
+      roomState.canEdit = true;
+      roomState.members = [];
+      updateQuery(null);
+      refreshAll();
+      showToast(`Left room ${code}.`, "warn");
+    }
+
+    function disconnectRoom() {
+      if (roomState.eventSource) {
+        roomState.eventSource.close();
+        roomState.eventSource = null;
+      }
+      clearInterval(roomState.presenceTimer);
+      clearTimeout(roomState.reconnectTimer);
+      roomState.presenceTimer = null;
+      roomState.reconnectTimer = null;
+    }
+
+    function connectRoomEvents() {
+      disconnectRoom();
+      if (!roomState.roomCode) return;
+
+      const params = new URLSearchParams({
+        sessionId: roomState.sessionId,
+        name: roomState.name || "Guest"
+      });
+
+      const source = new EventSource(`/api/rooms/${roomState.roomCode}/events?${params.toString()}`);
+      roomState.eventSource = source;
+      source.addEventListener("room", (event) => {
+        applyRoomSnapshot(JSON.parse(event.data));
+      });
+      source.onerror = () => {
+        clearTimeout(roomState.reconnectTimer);
+        roomState.reconnectTimer = setTimeout(connectRoomEvents, 2000);
+      };
+      roomState.presenceTimer = setInterval(sendPresence, 15000);
+    }
+
+    async function sendPresence() {
+      if (!roomState.roomCode) return;
+      try {
+        await fetch(`/api/rooms/${roomState.roomCode}/presence`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            sessionId: roomState.sessionId,
+            collaboratorName: roomState.name
+          })
+        });
+      } catch (error) {
+        console.warn("Presence update failed:", error);
+      }
+    }
+
+    async function updateMemberRole(targetSessionId, role) {
+      if (roomState.role !== "admin") return;
+
+      try {
+        const response = await fetch(`/api/rooms/${roomState.roomCode}/permissions`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            sessionId: roomState.sessionId,
+            collaboratorName: roomState.name,
+            targetSessionId,
+            role
+          })
+        });
+        const snapshot = await readApiResponse(response);
+        if (!response.ok) return showToast(snapshot.error || "Could not update permission.", "error");
+        applyRoomSnapshot(snapshot);
+      } catch (error) {
+        console.error("Permission update failed:", error);
+        showToast("Could not update permission.", "error");
+      }
+    }
+
+    function applyRoomSnapshot(snapshot) {
+      roomState.roomCode = snapshot.code;
+      roomState.role = snapshot.yourRole;
+      roomState.canEdit = !!snapshot.canEdit;
+      roomState.members = snapshot.members || [];
+      roomState.joinUrl = buildJoinUrl(snapshot.code);
+      document.getElementById("roomCode").value = snapshot.code;
+
+      if (snapshot.gameState) {
+        roomState.applyingRemote = true;
+        gameState = normalizeState(snapshot.gameState);
+        syncRuleInputs();
+        roomState.applyingRemote = false;
+      }
+
+      refreshAll();
+    }
+
+    function queueSync() {
+      if (!roomState.roomCode || !roomState.canEdit || roomState.applyingRemote) return;
+      clearTimeout(roomState.syncTimer);
+      roomState.syncTimer = setTimeout(pushStateToRoom, 120);
+    }
+
+    async function pushStateToRoom() {
+      if (!roomState.roomCode || !roomState.canEdit) return;
+      try {
+        const response = await fetch(`/api/rooms/${roomState.roomCode}/update`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            sessionId: roomState.sessionId,
+            collaboratorName: roomState.name,
+            gameState
+          })
+        });
+        const snapshot = await readApiResponse(response);
+        if (!response.ok) return showToast(snapshot.error || "Could not sync room.", "error");
+        applyRoomSnapshot(snapshot);
+      } catch (error) {
+        console.error("Room sync failed:", error);
+        showToast("Could not sync room.", "error");
+      }
+    }
+
+    async function readApiResponse(response) {
+      const text = await response.text();
+      if (!text) return {};
+      try {
+        return JSON.parse(text);
+      } catch (error) {
+        console.error("Unexpected API response:", text);
+        throw new Error("Unexpected server response");
+      }
+    }
+
+    function safely(label, fn) {
+      try {
+        fn();
+      } catch (error) {
+        console.error(`${label} failed:`, error);
+      }
+    }
+
+    function buildJoinUrl(roomCode) {
+      if (!roomCode) return "";
+      const localHost = ["localhost", "127.0.0.1"].includes(window.location.hostname);
+      const base = localHost && roomState.serverInfo.addresses.length
+        ? `http://${roomState.serverInfo.addresses[0]}:${roomState.serverInfo.port || 3000}`
+        : window.location.origin;
+      return `${base}/?room=${encodeURIComponent(roomCode)}`;
+    }
+
+    function updateQuery(roomCode) {
+      const url = new URL(window.location.href);
+      if (roomCode) url.searchParams.set("room", roomCode);
+      else url.searchParams.delete("room");
+      window.history.replaceState({}, "", url.toString());
+    }
+
+    async function copyJoinLink() {
+      if (!roomState.joinUrl) return;
+      try {
+        await navigator.clipboard.writeText(roomState.joinUrl);
+        showToast("Join link copied.");
+      } catch (error) {
+        showToast("Could not copy link.", "error");
+      }
+    }
+
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function sum(values) {
+      return values.reduce((acc, value) => acc + value, 0);
+    }
+
+    function swap(array, a, b) {
+      if (!Array.isArray(array)) return;
+      const tmp = array[a];
+      array[a] = array[b];
+      array[b] = tmp;
+    }
+
+    function makeId(prefix) {
+      return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+    }
+
+    function capitalize(value) {
+      return String(value || "").replace(/^\w/, (match) => match.toUpperCase());
+    }
+
+    function formatSeen(value) {
+      if (!value) return "just now";
+      const seconds = Math.max(0, Math.floor((Date.now() - new Date(value).getTime()) / 1000));
+      if (seconds < 10) return "just now";
+      if (seconds < 60) return `${seconds}s ago`;
+      if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
+      return `${Math.floor(seconds / 3600)}h ago`;
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#39;");
+    }
+
+    function showToast(message, kind) {
+      const toast = document.createElement("div");
+      toast.className = `toast${kind === "error" ? " error" : kind === "warn" ? " warn" : ""}`;
+      toast.textContent = message;
+      document.body.appendChild(toast);
+      setTimeout(() => {
+        if (toast.parentNode) toast.parentNode.removeChild(toast);
+      }, 2600);
+    }
+  </script>
+</body>
+</html>
