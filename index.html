@@ -99,6 +99,7 @@
       background: rgba(10, 20, 40, 0.6); color: #e8f0ff;
     }
     .option-row input[type="checkbox"] { width: 18px; height: 18px; margin-right: 8px; }
+    .option-row input[type="radio"] { margin-right: 6px; }
 
     .info-btn {
       width: 28px; height: 28px; border-radius: 50%; background: rgba(54, 209, 220, 0.15);
@@ -212,7 +213,6 @@
 
     .footer { text-align: center; padding: 22px; color: rgba(200, 230, 255, 0.8); font-size: 16px; font-weight: 600; }
 
-    /* Responsive grids */
     @media (min-width: 768px) {
       .predictions-grid, .haths-grid { grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); }
       .container { padding: 20px; }
@@ -221,28 +221,22 @@
       .predictions-grid, .haths-grid { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
     }
 
-    /* Hide sections initially */
     .panel:not(.setup-panel) { display: none; }
     .show { display: block !important; }
 
-    /* Accessibility */
     @media (prefers-reduced-motion: reduce) {
       .canvas-bg { display: none !important; }
       body { background: #0a0e1a; }
     }
 
-    /* Medal badges */
     .medal { font-size: 18px; }
   </style>
 </head>
 <body>
-  <!-- Futuristic Cartoon Background (neon grid + floaters) -->
   <canvas class="canvas-bg" id="bgCanvas"></canvas>
 
   <div class="container">
-    <!-- Header -->
     <div class="header">
-      <!-- Updated Logo (SVG image) -->
       <img
         class="logo"
         alt="Judgment Logo"
@@ -254,7 +248,6 @@
       <div class="credit">Created by Harsh G • Neon Edition</div>
     </div>
 
-    <!-- Setup Panel -->
     <div class="panel setup-panel">
       <h2>🎮 Game Setup</h2>
 
@@ -290,7 +283,6 @@
           <button class="info-btn" data-info="streakBonus">i</button>
         </div>
 
-        <!-- NEW: Scoring mode radios (keep everything else the same) -->
         <div class="option-row" id="scoringModeRow">
           <label>Scoring:</label>
           <label><input type="radio" name="scoringMode" value="classic" checked /> Classic (10 + won)</label>
@@ -305,7 +297,6 @@
       </div>
     </div>
 
-    <!-- Round Panel -->
     <div class="panel round-panel">
       <div class="round-header">
         <div class="round-pill" id="roundPill">Round 1 • 1 cards</div>
@@ -332,7 +323,6 @@
       </div>
     </div>
 
-    <!-- Scoreboard Panel -->
     <div class="panel scoreboard-panel">
       <h2>📊 Scoreboard</h2>
       <div style="overflow-x: auto;">
@@ -354,7 +344,6 @@
       <button class="btn btn-warning" id="undoRoundBtn" style="margin-top: 15px; display: none;">↩️ Undo Last Round</button>
     </div>
 
-    <!-- History Panel -->
     <div class="panel history-panel">
       <h2>📚 Game History</h2>
       <div id="historyContainer">
@@ -362,7 +351,6 @@
       </div>
     </div>
 
-    <!-- Share Panel -->
     <div class="panel share-panel">
       <h2>📱 Share Game</h2>
       <div class="qr-container">
@@ -373,13 +361,10 @@
     </div>
   </div>
 
-  <!-- Mini Scoreboard -->
   <div class="mini-scoreboard" id="miniScoreboard"></div>
 
-  <!-- Footer -->
   <div class="footer">Created by Harsh G • Neon Edition</div>
 
-  <!-- Modal -->
   <div class="modal" id="modal">
     <div class="modal-content">
       <div class="modal-header">
@@ -391,11 +376,9 @@
     </div>
   </div>
 
-  <!-- QR Code Library (kept) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode/1.5.3/qrcode.min.js"></script>
 
   <script>
-    // ===== Game State =====
     let gameState = {
       players: [],
       rules: {
@@ -405,7 +388,7 @@
         streakBonus: true,
         streakStep: 5,
         bonusPoints: 10,
-        scoringMode: 'classic' // 'classic' or 'alt'
+        scoringMode: 'classic'
       },
       roundIndex: 0,
       maxCards: 1,
@@ -415,12 +398,10 @@
       rounds: [],
       currentBids: [],
       currentWon: [],
-      // NEW: live streak counters (reset to 0 after awarding bonus at 5)
       streakCounters: [],
       gameEnded: false
     };
 
-    // ===== Constants =====
     const TRUMP_NAMES = ['spade', 'diamond', 'club', 'heart', 'notrump'];
     const TRUMP_LABELS = {
       spade: '♠ Spade (Kadi)',
@@ -441,18 +422,15 @@
     }
 
     function setupEventListeners() {
-      // Setup panel
       document.getElementById('addPlayerBtn').addEventListener('click', addPlayer);
       document.getElementById('startGameBtn').addEventListener('click', startGame);
       document.getElementById('resetGameBtn').addEventListener('click', resetGame);
 
-      // Options
       document.getElementById('numDecks').addEventListener('change', updateRules);
       document.getElementById('missPenalty').addEventListener('change', updateRules);
       document.getElementById('allowEqualPredictions').addEventListener('change', updateRules);
       document.getElementById('streakBonus').addEventListener('change', updateRules);
 
-      // NEW: scoring mode radios
       document.getElementsByName('scoringMode').forEach?.(r => {
         r.addEventListener('change', () => {
           if (r.checked) {
@@ -462,29 +440,23 @@
         });
       });
 
-      // Round panel
       document.getElementById('confirmPredictionsBtn').addEventListener('click', confirmPredictions);
       document.getElementById('closeRoundBtn').addEventListener('click', closeRound);
       document.getElementById('undoRoundBtn').addEventListener('click', undoLastRound);
-
-      // End Game (next to Reset)
       document.getElementById('endGameBtn').addEventListener('click', endGamePrompt);
 
-      // Background toggle
       document.getElementById('bgToggle').addEventListener('change', toggleBackground);
 
-      // Info buttons
       document.querySelectorAll('.info-btn').forEach(btn => btn.addEventListener('click', showInfo));
 
-      // Modal
       document.getElementById('modalClose').addEventListener('click', closeModal);
       document.getElementById('modalOk').addEventListener('click', closeModal);
       document.getElementById('modal').addEventListener('click', (e) => { if (e.target.id === 'modal') closeModal(); });
 
-      // Add initial players if empty
-      if (gameState.players.length === 0) { for (let i = 0; i < 3; i++) addPlayer(); }
+      if (gameState.players.length === 0) {
+        for (let i = 0; i < 3; i++) addPlayer();
+      }
 
-      // Reflect saved scoring mode radios
       setScoringModeRadios(gameState.rules.scoringMode || 'classic');
     }
 
@@ -493,7 +465,6 @@
       for (const r of radios) { r.checked = (r.value === mode); }
     }
 
-    // ===== Players =====
     function addPlayer() {
       if (gameState.players.length >= 20) { showToast('Maximum 20 players allowed', 'error'); return; }
       const player = { id: `p${Date.now()}_${Math.random().toString(36).substr(2, 9)}`, name: '' };
@@ -529,18 +500,14 @@
       });
     }
 
-    // ===== Rules =====
     function updateRules() {
       gameState.rules.numDecks = parseInt(document.getElementById('numDecks').value) || 1;
       gameState.rules.missPenalty = document.getElementById('missPenalty').value;
       gameState.rules.allowEqualPredictions = document.getElementById('allowEqualPredictions').checked;
       gameState.rules.streakBonus = document.getElementById('streakBonus').checked;
-
-      // scoring mode radios already update rules on change
       saveGameState();
     }
 
-    // ===== Reset / Start =====
     function resetGame() {
       if (confirm('⚠️ Reset the entire game? All scores and history will be erased.')) {
         const keepScoringMode = gameState.rules.scoringMode || 'classic';
@@ -572,7 +539,6 @@
           gameEnded: false
         };
 
-        // Reset form values (preserve toggles)
         document.getElementById('numDecks').value = gameState.rules.numDecks;
         document.getElementById('missPenalty').value = gameState.rules.missPenalty;
         document.getElementById('allowEqualPredictions').checked = gameState.rules.allowEqualPredictions;
@@ -588,24 +554,20 @@
     }
 
     function startGame() {
-      // Validate players
       const validPlayers = gameState.players.filter(p => p.name.length > 0);
       if (validPlayers.length < 3) { showToast('At least 3 players with names required', 'error'); return; }
 
-      // Unique names
       const names = validPlayers.map(p => p.name.toLowerCase());
       if (new Set(names).size !== names.length) { showToast('Player names must be unique', 'error'); return; }
 
       gameState.players = validPlayers;
 
-      // Compute maxCards based on decks and player count
       const totalCards = 52 * gameState.rules.numDecks;
       gameState.maxCards = Math.max(1, Math.floor(totalCards / gameState.players.length));
 
-      // Initialize cycling state
       gameState.roundIndex = 0;
-      gameState.currentCardCount = 1;   // start at 1
-      gameState.cycleDirection = 1;     // go up
+      gameState.currentCardCount = 1;
+      gameState.cycleDirection = 1;
       gameState.trumpIndex = 0;
       gameState.rounds = [];
       gameState.currentBids = new Array(gameState.players.length).fill(0);
@@ -619,7 +581,6 @@
       showToast('Game started!', 'success');
     }
 
-    // ===== Panels =====
     function showPanel(panelClass) {
       document.querySelectorAll('.panel').forEach(p => p.classList.remove('show'));
       document.querySelector(`.${panelClass}`).classList.add('show');
@@ -640,12 +601,10 @@
       updateMiniScoreboard();
     }
 
-    // ===== Round UI =====
     function updateRoundUI() {
       const cardCount = getCurrentCardCount();
       const trump = TRUMP_NAMES[gameState.trumpIndex % 5];
 
-      // Header
       document.getElementById('roundPill').textContent = `Round ${gameState.roundIndex + 1} • ${cardCount} cards`;
 
       const trumpBadge = document.getElementById('trumpBadge');
@@ -709,7 +668,34 @@
 
     function changePrediction(playerIndex, delta) {
       const cardCount = getCurrentCardCount();
-      const newValue = Math.max(0, Math.min(cardCount, gameState.currentBids[playerIndex] + delta));
+      const dealerIndex = getDealerIndex();
+      const currentValue = gameState.currentBids[playerIndex];
+      let newValue = Math.max(0, Math.min(cardCount, currentValue + delta));
+
+      if (
+        !gameState.rules.allowEqualPredictions &&
+        playerIndex === dealerIndex
+      ) {
+        const sumOthers = gameState.currentBids.reduce((sum, bid, idx) => {
+          return idx === playerIndex ? sum : sum + bid;
+        }, 0);
+
+        const forbiddenBid = cardCount - sumOthers;
+
+        if (forbiddenBid >= 0 && forbiddenBid <= cardCount && newValue === forbiddenBid) {
+          if (delta > 0) {
+            newValue = Math.min(cardCount, newValue + 1);
+          } else if (delta < 0) {
+            newValue = Math.max(0, newValue - 1);
+          }
+
+          if (newValue === forbiddenBid) {
+            showToast('⚠️ Dealer cannot bid this amount (would make sum equal to tricks)', 'warning');
+            return;
+          }
+        }
+      }
+
       gameState.currentBids[playerIndex] = newValue;
       document.getElementById(`pred_display_${playerIndex}`).textContent = newValue;
       updatePredictionSum();
@@ -721,17 +707,6 @@
       const cardCount = getCurrentCardCount();
       const sumEl = document.getElementById('predictionSum');
       sumEl.textContent = `Sum: ${sum} / ${cardCount}`;
-
-      // Dealer lock if equal predictions not allowed
-      if (!gameState.rules.allowEqualPredictions && sum === cardCount) {
-        const dealerIndex = getDealerIndex();
-        if (gameState.currentBids[dealerIndex] !== 0) {
-          showToast('⚠️ Dealer cannot bid this amount (would make sum equal to tricks)', 'warning');
-          gameState.currentBids[dealerIndex] = 0;
-          document.getElementById(`pred_display_${dealerIndex}`).textContent = 0;
-          updatePredictionSum();
-        }
-      }
     }
 
     function updateHathsGrid() {
@@ -805,7 +780,6 @@
       const cardCount = getCurrentCardCount();
       if (sum !== cardCount) { showToast('Sum of tricks must equal number of cards dealt', 'error'); return; }
 
-      // Calculate scores + update streak counters with reset at 5 (when bonus awarded)
       const roundScores = gameState.players.map((player, i) => {
         const bid = gameState.currentBids[i];
         const won = gameState.currentWon[i];
@@ -813,37 +787,30 @@
 
         if (bid === won) {
           if (gameState.rules.scoringMode === 'alt') {
-            // Alternative pattern: 0 -> 10, else 20 + bid
             points = (bid === 0) ? 10 : (20 + bid);
           } else {
-            // Classic: 10 + won
             points = 10 + won;
           }
 
-          // Streak handling
           if (gameState.rules.streakBonus) {
             gameState.streakCounters[i] = (gameState.streakCounters[i] || 0) + 1;
             if (gameState.streakCounters[i] >= gameState.rules.streakStep) {
               points += gameState.rules.bonusPoints;
-              // Reset streak to 0 once bonus is awarded
               gameState.streakCounters[i] = 0;
             }
           }
         } else {
-          // Missed prediction
           if (gameState.rules.missPenalty === 'difference') {
             points = -Math.abs(bid - won);
           } else {
             points = 0;
           }
-          // Reset streak on miss
           if (gameState.rules.streakBonus) gameState.streakCounters[i] = 0;
         }
 
         return points;
       });
 
-      // Save round
       gameState.rounds.push({
         roundNumber: gameState.roundIndex + 1,
         cardCount: cardCount,
@@ -853,14 +820,12 @@
         scores: roundScores
       });
 
-      // Prepare next round (infinite cycling 1 <-> max)
       gameState.roundIndex++;
       gameState.trumpIndex++;
       if (gameState.currentCardCount >= gameState.maxCards) gameState.cycleDirection = -1;
       if (gameState.currentCardCount <= 1) gameState.cycleDirection = 1;
       gameState.currentCardCount = Math.max(1, Math.min(gameState.maxCards, gameState.currentCardCount + gameState.cycleDirection));
 
-      // Reset round inputs
       gameState.currentBids.fill(0);
       gameState.currentWon.fill(0);
 
@@ -883,7 +848,6 @@
         if (gameState.currentCardCount >= gameState.maxCards) gameState.cycleDirection = -1;
         else if (gameState.currentCardCount <= 1) gameState.cycleDirection = 1;
 
-        // Rebuild streakCounters based on remaining rounds using the new rules
         if (gameState.rules.streakBonus) {
           gameState.streakCounters = new Array(gameState.players.length).fill(0);
           for (const round of gameState.rounds) {
@@ -892,7 +856,6 @@
               if (hit) {
                 gameState.streakCounters[i] += 1;
                 if (gameState.streakCounters[i] >= gameState.rules.streakStep) {
-                  // reset after bonus threshold
                   gameState.streakCounters[i] = 0;
                 }
               } else {
@@ -938,7 +901,6 @@
       `);
     }
 
-    // ===== Scoreboard & History =====
     function updateScoreboard() {
       const tbody = document.getElementById('scoreboardBody');
       tbody.innerHTML = '';
@@ -980,10 +942,8 @@
       return totals;
     }
 
-    // Show current live streak counters (with reset after bonuses)
     function computeStreaksAll() {
       if (gameState.streakCounters?.length) return gameState.streakCounters.slice();
-      // Fallback (shouldn’t happen after startGame)
       return new Array(gameState.players.length).fill(0);
     }
 
@@ -1019,7 +979,6 @@
       // Placeholder for future compact view if needed.
     }
 
-    // ===== Helpers =====
     function getCurrentCardCount() {
       return Math.max(1, Math.min(gameState.maxCards, gameState.currentCardCount || 1));
     }
@@ -1028,7 +987,6 @@
       return gameState.roundIndex % gameState.players.length;
     }
 
-    // Legacy fallback; not used for scoring anymore
     function calculateCurrentStreaks() {
       const streaks = new Array(gameState.players.length).fill(0);
       for (let i = gameState.rounds.length - 1; i >= 0; i--) {
@@ -1040,7 +998,6 @@
       return streaks;
     }
 
-    // ===== ONLINE QR CODE (works without local libs) =====
     function generateQR() {
       const qrContainer = document.getElementById('qrCode');
       const url = window.location.href;
@@ -1048,7 +1005,6 @@
       qrContainer.innerHTML = `<img src="${imgSrc}" alt="QR Code" width="200" height="200" loading="lazy">`;
     }
 
-    // ===== Background (Neon Grid + Floaters) =====
     function setupBackground() {
       const canvas = document.getElementById('bgCanvas');
       const ctx = canvas.getContext('2d');
@@ -1161,7 +1117,6 @@
       canvas.style.display = isEnabled ? 'block' : 'none';
     }
 
-    // ===== Modal / Toast =====
     function showInfo(e) {
       const info = e.target.dataset.info;
       const infoTexts = {
@@ -1201,14 +1156,12 @@
           const parsed = JSON.parse(saved);
           gameState = { ...gameState, ...parsed };
 
-          // restore form
           document.getElementById('numDecks').value = gameState.rules.numDecks || 1;
           document.getElementById('missPenalty').value = gameState.rules.missPenalty || 'zero';
           document.getElementById('allowEqualPredictions').checked = !!gameState.rules.allowEqualPredictions;
           document.getElementById('streakBonus').checked = (gameState.rules.streakBonus !== false);
           setScoringModeRadios(gameState.rules.scoringMode || 'classic');
 
-          // ensure streakCounters length matches players
           if (!Array.isArray(gameState.streakCounters)) gameState.streakCounters = [];
         }
       } catch (e) {
@@ -1216,7 +1169,6 @@
       }
     }
 
-    // Expose for inline handlers
     window.removePlayer = removePlayer;
     window.changePrediction = changePrediction;
     window.changeHath = changeHath;
