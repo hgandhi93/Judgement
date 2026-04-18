@@ -2,270 +2,668 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Judgment Live Scorekeeper</title>
   <style>
-    * { box-sizing: border-box; }
+    :root {
+      --bg-top: #07111f;
+      --bg-mid: #0d1d34;
+      --bg-bottom: #08101c;
+      --panel: rgba(11, 24, 44, 0.9);
+      --panel-border: rgba(92, 143, 219, 0.35);
+      --panel-glow: rgba(73, 184, 255, 0.18);
+      --surface: rgba(6, 16, 30, 0.92);
+      --surface-border: rgba(66, 97, 145, 0.45);
+      --text: #eef5ff;
+      --muted: #bdd1ee;
+      --accent: #66d8ea;
+      --accent-strong: #5e8fff;
+      --warn: #ffda83;
+      --danger: #ff6f7b;
+      --success: #1f9b63;
+      --shadow: 0 18px 42px rgba(0, 0, 0, 0.32);
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html {
+      -webkit-text-size-adjust: 100%;
+    }
+
     body {
       margin: 0;
       font-family: "Segoe UI", Tahoma, sans-serif;
-      background: linear-gradient(180deg, #08111f, #0e1e36 45%, #08111f);
-      color: #eef5ff;
+      background:
+        radial-gradient(circle at top right, rgba(92, 143, 255, 0.2), transparent 28%),
+        radial-gradient(circle at top left, rgba(102, 216, 234, 0.18), transparent 22%),
+        linear-gradient(180deg, var(--bg-top), var(--bg-mid) 48%, var(--bg-bottom));
+      color: var(--text);
+      min-height: 100vh;
+      padding-bottom: calc(24px + env(safe-area-inset-bottom));
     }
+
+    button,
+    .btn,
+    .count-btn,
+    .info-btn {
+      touch-action: manipulation;
+    }
+
     .page {
       max-width: 1280px;
       margin: 0 auto;
-      padding: 18px;
+      padding: 14px;
     }
-    .hero, .card {
-      background: rgba(12, 24, 44, 0.94);
-      border: 1px solid #25446f;
-      border-radius: 20px;
-      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.28);
+
+    .hero,
+    .card,
+    .modal-card {
+      background: var(--panel);
+      border: 1px solid var(--panel-border);
+      border-radius: 22px;
+      box-shadow: var(--shadow), inset 0 0 0 1px rgba(255, 255, 255, 0.02);
+      backdrop-filter: blur(14px);
     }
+
     .hero {
-      padding: 22px;
-      margin-bottom: 18px;
+      position: relative;
+      overflow: hidden;
+      padding: 22px 20px;
+      margin-bottom: 16px;
     }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      inset: auto -10% -60px auto;
+      width: 220px;
+      height: 220px;
+      background: radial-gradient(circle, rgba(92, 143, 255, 0.25), transparent 68%);
+      pointer-events: none;
+    }
+
     .hero h1 {
       margin: 0 0 8px;
-      font-size: 34px;
+      font-size: clamp(28px, 4vw, 36px);
+      letter-spacing: 0.02em;
     }
+
     .hero p {
       margin: 0;
-      color: #bcd2ef;
+      max-width: 760px;
+      color: var(--muted);
+      font-size: 15px;
     }
-    .chips, .toolbar, .actions, .row {
+
+    .chips,
+    .toolbar,
+    .actions,
+    .row,
+    .rule-line,
+    .card-head {
       display: flex;
       flex-wrap: wrap;
       gap: 10px;
       align-items: center;
     }
-    .chips { margin-top: 14px; }
+
+    .chips {
+      margin-top: 16px;
+    }
+
     .chip {
       padding: 8px 12px;
       border-radius: 999px;
-      background: #16355b;
+      background: rgba(20, 53, 91, 0.85);
+      border: 1px solid rgba(103, 172, 255, 0.2);
+      color: #e2f0ff;
       font-size: 13px;
       font-weight: 700;
-      color: #def0ff;
     }
+
     .layout {
       display: grid;
-      gap: 18px;
+      gap: 16px;
     }
-    .main, .side {
+
+    .main,
+    .side {
       display: grid;
-      gap: 18px;
+      gap: 16px;
     }
+
     .card {
       padding: 18px;
     }
-    h2, h3 {
-      margin-top: 0;
-      margin-bottom: 14px;
+
+    h2,
+    h3 {
+      margin: 0 0 14px;
     }
+
     .grid-two {
       display: grid;
       gap: 12px;
     }
-    label {
-      display: block;
+
+    .field-label,
+    .rule-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
       margin-bottom: 6px;
       font-size: 14px;
       font-weight: 700;
+      color: var(--text);
     }
-    .input, .select, .number {
+
+    .input,
+    .select,
+    .number {
       width: 100%;
+      min-height: 48px;
       padding: 12px 14px;
-      border: 1px solid #305582;
-      border-radius: 14px;
-      background: #0a1425;
-      color: #eef5ff;
+      border: 1px solid rgba(86, 130, 193, 0.45);
+      border-radius: 15px;
+      background: var(--surface);
+      color: var(--text);
       font-size: 15px;
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02);
     }
-    .number { width: 110px; }
+
+    .input::placeholder {
+      color: rgba(189, 209, 238, 0.6);
+    }
+
+    .number {
+      width: 110px;
+    }
+
     .check-label {
       display: inline-flex;
       gap: 8px;
       align-items: center;
       margin: 0;
+      min-height: 44px;
+      font-weight: 700;
     }
-    .btn {
+
+    .btn,
+    .count-btn,
+    .info-btn,
+    .modal-close {
       border: none;
-      border-radius: 14px;
+      cursor: pointer;
+    }
+
+    .btn {
+      min-height: 46px;
+      border-radius: 15px;
       padding: 12px 18px;
       font-size: 14px;
       font-weight: 800;
-      cursor: pointer;
-      background: linear-gradient(135deg, #59d5e7, #5d8eff);
-      color: #05111d;
+      background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+      color: #07111f;
+      box-shadow: 0 10px 24px rgba(59, 153, 255, 0.28);
+      transition: transform 0.14s ease, box-shadow 0.14s ease, filter 0.14s ease;
     }
+
+    .btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 14px 28px rgba(59, 153, 255, 0.32);
+    }
+
     .btn.alt {
-      background: linear-gradient(135deg, #ffcf67, #ff9d5d);
+      background: linear-gradient(135deg, #ffd17a, #ff9d5d);
       color: #321600;
+      box-shadow: 0 10px 24px rgba(255, 158, 94, 0.24);
     }
+
     .btn.danger {
-      background: linear-gradient(135deg, #ff7b81, #f04343);
+      background: linear-gradient(135deg, #ff7f89, #f24848);
       color: #fff;
+      box-shadow: 0 10px 24px rgba(242, 72, 72, 0.24);
     }
-    .btn:disabled, .input:disabled, .select:disabled, .number:disabled {
+
+    .btn:disabled,
+    .input:disabled,
+    .select:disabled,
+    .number:disabled,
+    .count-btn:disabled,
+    .info-btn:disabled {
       opacity: 0.5;
       cursor: not-allowed;
+      box-shadow: none;
+      transform: none;
     }
+
+    .info-btn {
+      width: 28px;
+      height: 28px;
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(102, 216, 234, 0.16);
+      color: #d7f8ff;
+      border: 1px solid rgba(102, 216, 234, 0.35);
+      font-size: 13px;
+      font-weight: 900;
+      flex: 0 0 auto;
+    }
+
+    .rule-grid {
+      display: grid;
+      gap: 12px;
+      margin-top: 10px;
+    }
+
+    .rule-item {
+      padding: 12px;
+      border-radius: 18px;
+      background: rgba(7, 18, 35, 0.65);
+      border: 1px solid rgba(63, 102, 154, 0.32);
+    }
+
     .notice {
       margin-top: 12px;
       padding: 12px;
-      border-radius: 14px;
-      background: #2d2942;
-      border: 1px solid #5a4d7d;
-      color: #ffe6a8;
+      border-radius: 15px;
+      background: rgba(41, 37, 63, 0.88);
+      border: 1px solid rgba(112, 95, 154, 0.62);
+      color: #ffe7a8;
       font-weight: 700;
     }
+
     .muted {
-      color: #bcd2ef;
+      color: var(--muted);
       font-size: 13px;
+      line-height: 1.45;
     }
-    .players, .members, .history, .grid-players {
+
+    .players,
+    .members,
+    .history,
+    .grid-players {
       display: grid;
       gap: 12px;
     }
-    .player-row, .member-row, .history-row, .score-box {
-      background: #0a1425;
-      border: 1px solid #223d62;
-      border-radius: 16px;
+
+    .player-row,
+    .member-row,
+    .history-row,
+    .score-box {
+      background: rgba(5, 15, 29, 0.9);
+      border: 1px solid rgba(59, 92, 138, 0.45);
+      border-radius: 18px;
       padding: 14px;
+      box-shadow: inset 0 0 24px rgba(62, 125, 255, 0.06);
     }
-    .player-row, .member-row {
+
+    .player-row,
+    .member-row {
       display: grid;
       gap: 12px;
       align-items: center;
     }
+
     .player-name-wrap {
       display: grid;
       gap: 8px;
     }
+
     .dealer-tag {
-      color: #ffe29d;
+      color: var(--warn);
       font-size: 13px;
       font-weight: 800;
     }
+
     .round-top {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: space-between;
+      display: grid;
       gap: 10px;
-      align-items: center;
       margin-bottom: 14px;
     }
+
+    .badge-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
     .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      min-height: 48px;
       padding: 10px 14px;
       border-radius: 999px;
-      background: #173d69;
+      background: rgba(21, 57, 98, 0.9);
+      border: 1px solid rgba(86, 139, 210, 0.3);
       font-weight: 800;
     }
+
     .badge.dealer {
-      background: #4e4020;
-      color: #ffe29d;
+      background: rgba(72, 58, 20, 0.92);
+      border-color: rgba(255, 215, 130, 0.26);
+      color: var(--warn);
     }
+
+    .badge.sir {
+      background: rgba(18, 47, 83, 0.95);
+    }
+
+    .sir-icon-shell {
+      width: 34px;
+      height: 34px;
+      border-radius: 12px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255, 255, 255, 0.08);
+      flex: 0 0 auto;
+    }
+
+    .sir-icon-shell svg {
+      width: 22px;
+      height: 22px;
+      display: block;
+    }
+
+    .sir-copy {
+      display: grid;
+      gap: 2px;
+      line-height: 1.1;
+    }
+
+    .sir-copy small {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 700;
+    }
+
     .counter {
       display: flex;
       gap: 10px;
       justify-content: center;
       align-items: center;
     }
+
     .count-btn {
-      width: 40px;
-      height: 40px;
-      border: none;
+      width: 42px;
+      height: 42px;
       border-radius: 999px;
-      background: linear-gradient(135deg, #59d5e7, #5d8eff);
-      color: #05111d;
+      background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+      color: #07111f;
       font-size: 20px;
       font-weight: 900;
-      cursor: pointer;
+      box-shadow: 0 10px 20px rgba(59, 153, 255, 0.22);
     }
+
     .count-value {
-      min-width: 60px;
-      height: 60px;
+      min-width: 62px;
+      height: 62px;
       display: flex;
-      justify-content: center;
       align-items: center;
+      justify-content: center;
       border-radius: 999px;
-      border: 2px solid #335886;
+      border: 2px solid rgba(91, 138, 201, 0.46);
+      background: rgba(255, 255, 255, 0.02);
       font-size: 24px;
       font-weight: 900;
+      box-shadow: inset 0 0 24px rgba(101, 183, 255, 0.05);
     }
+
     .sum {
       margin: 12px 0 14px;
       padding: 12px;
       text-align: center;
-      border-radius: 14px;
-      background: #153254;
+      border-radius: 15px;
+      background: rgba(22, 52, 84, 0.92);
+      border: 1px solid rgba(76, 132, 201, 0.24);
       font-weight: 800;
     }
+
     .share-box {
       margin-top: 12px;
       padding: 12px;
-      border-radius: 14px;
-      background: #0a1425;
-      border: 1px solid #223d62;
+      border-radius: 15px;
+      background: rgba(5, 15, 29, 0.92);
+      border: 1px solid rgba(59, 92, 138, 0.45);
       word-break: break-word;
-      color: #bcd2ef;
+      color: var(--muted);
     }
+
     .qr-wrap {
       text-align: center;
     }
+
     .qr-wrap img {
       width: 220px;
       max-width: 100%;
       padding: 10px;
       background: #fff;
-      border-radius: 14px;
+      border-radius: 18px;
+      box-shadow: 0 12px 24px rgba(0, 0, 0, 0.28);
     }
+
     table {
       width: 100%;
       border-collapse: collapse;
-      background: #0a1425;
-      border-radius: 16px;
+      background: rgba(5, 15, 29, 0.92);
+      border-radius: 18px;
       overflow: hidden;
     }
-    th, td {
+
+    th,
+    td {
       padding: 12px 10px;
-      border-bottom: 1px solid #223d62;
+      border-bottom: 1px solid rgba(58, 92, 138, 0.45);
       text-align: center;
       font-size: 14px;
     }
-    th { background: #153254; }
+
+    th {
+      background: rgba(20, 50, 83, 0.96);
+      font-weight: 800;
+    }
+
+    .scoreboard-foot {
+      margin-top: 12px;
+      text-align: right;
+      color: rgba(189, 209, 238, 0.92);
+      font-size: 13px;
+      font-weight: 800;
+    }
+
     .toast {
       position: fixed;
       top: 16px;
       right: 16px;
       z-index: 200;
+      max-width: min(320px, calc(100vw - 32px));
       padding: 14px 16px;
-      border-radius: 14px;
+      border-radius: 15px;
       font-weight: 800;
-      color: white;
-      background: #1f9b63;
-      box-shadow: 0 12px 26px rgba(0, 0, 0, 0.28);
+      color: #fff;
+      background: var(--success);
+      box-shadow: 0 14px 26px rgba(0, 0, 0, 0.32);
     }
-    .toast.error { background: #c73f3f; }
-    .toast.warn { background: #d78626; }
-    @media (min-width: 940px) {
+
+    .toast.error {
+      background: #c63f4f;
+    }
+
+    .toast.warn {
+      background: #d78726;
+    }
+
+    .modal {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      z-index: 250;
+      background: rgba(3, 8, 18, 0.72);
+      backdrop-filter: blur(4px);
+    }
+
+    .modal.show {
+      display: flex;
+    }
+
+    .modal-card {
+      width: min(100%, 460px);
+      padding: 20px;
+    }
+
+    .modal-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+
+    .modal-head h3 {
+      margin: 0;
+    }
+
+    .modal-close {
+      width: 38px;
+      height: 38px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text);
+      font-size: 20px;
+      font-weight: 900;
+    }
+
+    .modal-body {
+      color: var(--muted);
+      line-height: 1.55;
+      margin-bottom: 16px;
+    }
+
+    @media (min-width: 960px) {
       .layout {
-        grid-template-columns: 1.15fr 0.85fr;
+        grid-template-columns: 1.12fr 0.88fr;
       }
+
       .grid-two {
         grid-template-columns: 1fr 1fr;
       }
+
       .player-row {
         grid-template-columns: minmax(0, 1fr) auto auto;
       }
+
       .member-row {
         grid-template-columns: minmax(0, 1fr) auto;
       }
+
       .grid-players {
         grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      }
+
+      .round-top {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+      }
+    }
+
+    @media (max-width: 959px) {
+      .grid-players {
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      }
+    }
+
+    @media (max-width: 720px) {
+      .page {
+        padding: 12px;
+      }
+
+      .hero,
+      .card {
+        border-radius: 20px;
+      }
+
+      .hero {
+        padding: 18px 16px;
+      }
+
+      .card {
+        padding: 16px;
+      }
+
+      .toolbar,
+      .actions,
+      .row {
+        gap: 8px;
+      }
+
+      .toolbar .btn,
+      .actions .btn {
+        flex: 1 1 calc(50% - 8px);
+      }
+
+      .player-row .actions,
+      .member-row .actions {
+        width: 100%;
+      }
+
+      .player-row .actions .btn,
+      .member-row .actions .btn {
+        flex: 1 1 calc(50% - 8px);
+      }
+
+      .count-btn {
+        width: 44px;
+        height: 44px;
+      }
+
+      .count-value {
+        min-width: 58px;
+        height: 58px;
+        font-size: 22px;
+      }
+
+      th,
+      td {
+        font-size: 13px;
+        padding: 10px 8px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .hero p {
+        font-size: 14px;
+      }
+
+      .toolbar .btn,
+      .actions .btn,
+      .player-row .actions .btn,
+      .member-row .actions .btn {
+        flex: 1 1 100%;
+      }
+
+      .badge-row {
+        display: grid;
+      }
+
+      .badge {
+        width: 100%;
+        justify-content: flex-start;
+      }
+
+      .grid-players {
+        grid-template-columns: 1fr;
       }
     }
   </style>
@@ -274,7 +672,7 @@
   <div class="page">
     <section class="hero">
       <h1>Judgment Live Scorekeeper</h1>
-      <p>Live rooms, shared scores, editor permissions, dealer tracking, and seating order changes.</p>
+      <p>Live rooms, shared scores, edit control handoff, dealer tracking, and seating changes built for mobile tables.</p>
       <div class="chips">
         <span class="chip" id="roomChip">Offline Mode</span>
         <span class="chip" id="roleChip">Offline Admin</span>
@@ -288,11 +686,11 @@
           <h2>Live Room</h2>
           <div class="grid-two">
             <div>
-              <label for="displayName">Your Name</label>
+              <label class="field-label" for="displayName">Your Name</label>
               <input id="displayName" class="input" placeholder="Harsh, Scorekeeper, Table 1">
             </div>
             <div>
-              <label for="roomCode">Room Code</label>
+              <label class="field-label" for="roomCode">Room Code</label>
               <input id="roomCode" class="input" maxlength="6" placeholder="ABC123">
             </div>
           </div>
@@ -307,23 +705,63 @@
 
         <section class="card">
           <h2>Game Setup</h2>
-          <div class="row">
-            <label for="numDecks" style="margin-bottom:0;">Decks</label>
-            <input id="numDecks" class="number" type="number" min="1" max="4" value="1" data-edit>
-            <label for="missPenalty" style="margin-bottom:0;">Miss Penalty</label>
-            <select id="missPenalty" class="select" style="max-width:220px;" data-edit>
-              <option value="zero">Zero Points</option>
-              <option value="difference">Minus Difference</option>
-            </select>
+          <div class="rule-grid">
+            <div class="rule-item">
+              <div class="rule-line">
+                <label class="rule-label" for="numDecks">Number of Decks</label>
+                <button class="info-btn" type="button" data-info="numDecks">i</button>
+              </div>
+              <select id="numDecks" class="select" data-edit>
+                <option value="1">1 Deck</option>
+                <option value="2">2 Decks</option>
+              </select>
+            </div>
+
+            <div class="rule-item">
+              <div class="rule-line">
+                <label class="rule-label" for="missPenalty">Miss Penalty</label>
+                <button class="info-btn" type="button" data-info="missPenalty">i</button>
+              </div>
+              <select id="missPenalty" class="select" data-edit>
+                <option value="zero">Zero Points</option>
+                <option value="difference">Minus Difference</option>
+              </select>
+            </div>
+
+            <div class="rule-item">
+              <div class="rule-line">
+                <label class="rule-label" for="allowEqualPredictions">Allow Equal Predictions</label>
+                <button class="info-btn" type="button" data-info="allowEqualPredictions">i</button>
+              </div>
+              <label class="check-label">
+                <input id="allowEqualPredictions" type="checkbox" data-edit>
+                Allow bids to match total tricks
+              </label>
+            </div>
+
+            <div class="rule-item">
+              <div class="rule-line">
+                <label class="rule-label" for="streakBonus">Streak Bonus</label>
+                <button class="info-btn" type="button" data-info="streakBonus">i</button>
+              </div>
+              <label class="check-label">
+                <input id="streakBonus" type="checkbox" checked data-edit>
+                Give bonus for repeated exact calls
+              </label>
+            </div>
+
+            <div class="rule-item">
+              <div class="rule-line">
+                <span class="rule-label">Scoring</span>
+                <button class="info-btn" type="button" data-info="scoringMode">i</button>
+              </div>
+              <div class="actions">
+                <label class="check-label"><input type="radio" name="scoringMode" value="classic" checked data-edit>Classic</label>
+                <label class="check-label"><input type="radio" name="scoringMode" value="alt" data-edit>Alternative</label>
+              </div>
+            </div>
           </div>
-          <div class="row" style="margin-top:12px;">
-            <label class="check-label"><input id="allowEqualPredictions" type="checkbox" data-edit>Allow Equal Predictions</label>
-            <label class="check-label"><input id="streakBonus" type="checkbox" checked data-edit>Streak Bonus</label>
-          </div>
-          <div class="row" style="margin-top:12px;">
-            <label class="check-label"><input type="radio" name="scoringMode" value="classic" checked data-edit>Classic</label>
-            <label class="check-label"><input type="radio" name="scoringMode" value="alt" data-edit>Alternative</label>
-          </div>
+
           <div class="actions" style="margin-top:14px;">
             <button class="btn" id="addPlayerBtn" data-edit>Add Player</button>
             <button class="btn" id="startGameBtn" data-edit>Start Game</button>
@@ -339,17 +777,22 @@
 
         <section class="card">
           <div class="round-top">
-            <div class="badge" id="roundLabel">Round setup</div>
-            <div class="badge dealer" id="dealerLabel">Dealer: -</div>
-            <div class="badge" id="trumpLabel">Trump: Spade</div>
+            <div class="badge-row">
+              <div class="badge" id="roundLabel">Round setup</div>
+              <div class="badge dealer" id="dealerLabel">Dealer: -</div>
+            </div>
+            <div class="badge sir" id="sirBadge"></div>
           </div>
+
           <div id="warningArea"></div>
+
           <h3>Predictions</h3>
           <div class="sum" id="predictionSum">Sum: 0 / 1</div>
           <div class="grid-players" id="predictionsGrid"></div>
           <div class="actions">
             <button class="btn" id="confirmPredictionsBtn" data-edit>Confirm Predictions</button>
           </div>
+
           <div id="wonSection" style="display:none; margin-top:18px;">
             <h3>Tricks Won</h3>
             <div class="sum" id="wonSum">Sum: 0 / 1</div>
@@ -378,6 +821,7 @@
               <tbody id="scoreboardBody"></tbody>
             </table>
           </div>
+          <div class="scoreboard-foot">Created by Harsh Gandhi</div>
         </section>
       </div>
 
@@ -405,13 +849,86 @@
     </div>
   </div>
 
+  <div class="modal" id="infoModal">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h3 id="infoModalTitle">Rule Info</h3>
+        <button class="modal-close" type="button" id="infoModalClose">x</button>
+      </div>
+      <div class="modal-body" id="infoModalBody"></div>
+      <button class="btn" type="button" id="infoModalOk">Got It</button>
+    </div>
+  </div>
+
   <script>
     const STORAGE = {
       game: "judgment_live_state_v3",
       session: "judgment_live_session_v3",
       name: "judgment_live_name_v3"
     };
-    const TRUMPS = ["Spade", "Diamond", "Club", "Heart", "No Trump"];
+
+    const SIR_DETAILS = [
+      {
+        key: "spade",
+        english: "Spade",
+        local: "Kadi",
+        color: "#9fd3ff",
+        path: "M12 2l3.09 6.26L22 9l-5 4.87L18.18 22 12 18.77 5.82 22 7 13.87 2 9l6.91-.74L12 2z"
+      },
+      {
+        key: "diamond",
+        english: "Diamond",
+        local: "Charkat",
+        color: "#ff94a8",
+        path: "M12 2l4.5 6.5L22 12l-5.5 4-4.5 6.5L7.5 16 2 12l4.5-6.5L12 2z"
+      },
+      {
+        key: "club",
+        english: "Club",
+        local: "Fallai",
+        color: "#7ee0ff",
+        path: "M12 2C9.5 2 7.5 4 7.5 6.5c0 1.58.81 2.97 2.06 3.81-.25.44-.56.86-.56 1.69 0 2.25 2.25 4 5 4s5-1.75 5-4c0-.83-.31-1.25-.56-1.69C19.69 9.47 20.5 8.08 20.5 6.5 20.5 4 18.5 2 16 2c-1 0-1.88.38-2.56 1C12.88 2.38 12 2 12 2z"
+      },
+      {
+        key: "heart",
+        english: "Heart",
+        local: "Laal",
+        color: "#ff839f",
+        path: "M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"
+      },
+      {
+        key: "notrump",
+        english: "No Trump",
+        local: "Hukam Nathi",
+        color: "#ceb2ff",
+        path: "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1.4 14.2L6.4 12l1.41-1.41 2.79 2.79 5.59-5.59L17.6 9l-7 7.2z"
+      }
+    ];
+
+    const SIR_SEQUENCE = [0, 1, 2, 3, 4, 3, 2, 1, 0, 4];
+
+    const RULE_INFO = {
+      numDecks: {
+        title: "Number of Decks",
+        body: "Choose between 1 deck and 2 decks. The app automatically recalculates the maximum cards per player using 52 cards per deck divided by the number of players."
+      },
+      missPenalty: {
+        title: "Miss Penalty",
+        body: "Zero Points means a missed bid gives 0 points. Minus Difference means you lose the absolute gap between bid and tricks won."
+      },
+      allowEqualPredictions: {
+        title: "Allow Equal Predictions",
+        body: "When this is off, the dealer is blocked from giving the final bid that would make the total bids exactly equal to the total tricks in that round."
+      },
+      streakBonus: {
+        title: "Streak Bonus",
+        body: "Players get a bonus after repeated exact calls. This table uses the original rule of +10 bonus after every 5 exact rounds in a row, then the streak resets."
+      },
+      scoringMode: {
+        title: "Scoring Mode",
+        body: "Classic gives 10 plus tricks won for an exact call. Alternative gives 10 for a correct zero, then 21 for one, 22 for two, and so on."
+      }
+    };
 
     let gameState = createDefaultGameState();
     const roomState = {
@@ -429,6 +946,8 @@
       syncTimer: null,
       applyingRemote: false
     };
+
+    const actionLocks = new Map();
 
     document.addEventListener("DOMContentLoaded", init);
 
@@ -460,7 +979,7 @@
         maxCards: 1,
         currentCardCount: 1,
         cycleDirection: 1,
-        trumpIndex: 0,
+        sirIndex: 0,
         rounds: [],
         currentBids: [],
         currentWon: [],
@@ -478,13 +997,34 @@
         ...(value || {}),
         rules: { ...base.rules, ...((value && value.rules) || {}) }
       };
+
       if (!Array.isArray(merged.players)) merged.players = [];
       if (!Array.isArray(merged.rounds)) merged.rounds = [];
       if (!Array.isArray(merged.currentBids)) merged.currentBids = [];
       if (!Array.isArray(merged.currentWon)) merged.currentWon = [];
       if (!Array.isArray(merged.streakCounters)) merged.streakCounters = [];
+
+      if (typeof merged.sirIndex !== "number") {
+        merged.sirIndex = Number(merged.trumpIndex || 0);
+      }
+
       merged.hasStarted = !!merged.hasStarted;
+      merged.rules.numDecks = Number(merged.rules.numDecks) === 2 ? 2 : 1;
       if (!merged.roundPhase) merged.roundPhase = "bidding";
+
+      merged.rounds = merged.rounds.map((round) => {
+        const sirIndex = typeof round.sirIndex === "number"
+          ? round.sirIndex
+          : typeof round.trumpIndex === "number"
+            ? round.trumpIndex
+            : 0;
+        return {
+          ...round,
+          sirIndex,
+          sir: SIR_DETAILS[sirIndex % SIR_DETAILS.length]?.english || round.sir || round.trump || "Spade"
+        };
+      });
+
       syncPlayerArrays(merged);
       return merged;
     }
@@ -512,14 +1052,17 @@
       } catch (error) {
         console.warn("Could not load local state:", error);
       }
+
       roomState.name = localStorage.getItem(STORAGE.name) || "";
       document.getElementById("displayName").value = roomState.name;
       syncRuleInputs();
+
       if (gameState.players.length === 0) {
         for (let index = 0; index < 3; index++) {
           gameState.players.push({ id: makeId("p"), name: "" });
         }
       }
+
       syncPlayerArrays(gameState);
     }
 
@@ -528,19 +1071,42 @@
         roomState.name = event.target.value.trim();
         localStorage.setItem(STORAGE.name, roomState.name);
       });
+
       document.getElementById("roomCode").addEventListener("input", (event) => {
         event.target.value = event.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6);
       });
-      document.getElementById("createRoomBtn").addEventListener("click", createRoom);
-      document.getElementById("joinRoomBtn").addEventListener("click", joinRoom);
-      document.getElementById("leaveRoomBtn").addEventListener("click", leaveRoom);
-      document.getElementById("copyLinkBtn").addEventListener("click", copyJoinLink);
-      document.getElementById("addPlayerBtn").addEventListener("click", addPlayer);
-      document.getElementById("startGameBtn").addEventListener("click", startGame);
-      document.getElementById("undoRoundBtn").addEventListener("click", undoRound);
-      document.getElementById("resetGameBtn").addEventListener("click", resetGame);
-      document.getElementById("confirmPredictionsBtn").addEventListener("click", confirmPredictions);
-      document.getElementById("closeRoundBtn").addEventListener("click", closeRound);
+
+      document.getElementById("createRoomBtn").addEventListener("click", () => {
+        runLocked("create-room", createRoom, 700);
+      });
+      document.getElementById("joinRoomBtn").addEventListener("click", () => {
+        runLocked("join-room", joinRoom, 700);
+      });
+      document.getElementById("leaveRoomBtn").addEventListener("click", () => {
+        runLocked("leave-room", leaveRoom, 500);
+      });
+      document.getElementById("copyLinkBtn").addEventListener("click", () => {
+        runLocked("copy-link", copyJoinLink, 500);
+      });
+      document.getElementById("addPlayerBtn").addEventListener("click", () => {
+        runLocked("add-player", addPlayer, 250);
+      });
+      document.getElementById("startGameBtn").addEventListener("click", () => {
+        runLocked("start-game", startGame, 700);
+      });
+      document.getElementById("undoRoundBtn").addEventListener("click", () => {
+        runLocked("undo-round", undoRound, 700);
+      });
+      document.getElementById("resetGameBtn").addEventListener("click", () => {
+        runLocked("reset-game", resetGame, 900);
+      });
+      document.getElementById("confirmPredictionsBtn").addEventListener("click", () => {
+        runLocked("confirm-predictions", confirmPredictions, 600);
+      });
+      document.getElementById("closeRoundBtn").addEventListener("click", () => {
+        runLocked("close-round", closeRound, 800);
+      });
+
       document.getElementById("numDecks").addEventListener("change", updateRules);
       document.getElementById("missPenalty").addEventListener("change", updateRules);
       document.getElementById("allowEqualPredictions").addEventListener("change", updateRules);
@@ -548,6 +1114,17 @@
       document.querySelectorAll("input[name='scoringMode']").forEach((radio) => {
         radio.addEventListener("change", updateRules);
       });
+
+      document.querySelectorAll("[data-info]").forEach((button) => {
+        button.addEventListener("click", () => openInfo(button.dataset.info));
+      });
+
+      document.getElementById("infoModalClose").addEventListener("click", closeInfo);
+      document.getElementById("infoModalOk").addEventListener("click", closeInfo);
+      document.getElementById("infoModal").addEventListener("click", (event) => {
+        if (event.target.id === "infoModal") closeInfo();
+      });
+
       window.addEventListener("beforeunload", () => {
         if (!roomState.roomCode) return;
         navigator.sendBeacon(
@@ -555,6 +1132,23 @@
           new Blob([JSON.stringify({ sessionId: roomState.sessionId })], { type: "application/json" })
         );
       });
+    }
+
+    function runLocked(key, fn, releaseMs) {
+      if (actionLocks.get(key)) return;
+      actionLocks.set(key, true);
+
+      Promise.resolve()
+        .then(fn)
+        .catch((error) => {
+          console.error(`Action failed: ${key}`, error);
+          showToast("Something went wrong. Please try again.", "error");
+        })
+        .finally(() => {
+          window.setTimeout(() => {
+            actionLocks.delete(key);
+          }, releaseMs || 350);
+        });
     }
 
     function refreshAll(options = {}) {
@@ -575,6 +1169,7 @@
       } catch (error) {
         console.warn("Could not save local state:", error);
       }
+
       if (!skipRemote) queueSync();
     }
 
@@ -603,13 +1198,16 @@
       document.querySelectorAll("[data-edit]").forEach((element) => {
         element.disabled = !editable;
       });
+
+      document.getElementById("startGameBtn").style.display = gameState.hasStarted ? "none" : "inline-flex";
+
       const banner = document.getElementById("permissionBanner");
       if (roomState.roomCode && !editable) {
         banner.style.display = "block";
-        banner.textContent = "You are connected in read-only mode. The admin can grant edit access from Connected People.";
+        banner.textContent = "You are connected in read-only mode. The admin can grant control from Connected People.";
       } else if (roomState.roomCode && roomState.role === "editor") {
         banner.style.display = "block";
-        banner.textContent = "You can edit this room because the admin granted editor access.";
+        banner.textContent = "You can edit this room because the admin granted you control.";
       } else {
         banner.style.display = "none";
       }
@@ -627,6 +1225,7 @@
       const container = document.getElementById("playersContainer");
       const editable = canEdit();
       container.innerHTML = "";
+
       gameState.players.forEach((player, index) => {
         const row = document.createElement("div");
         row.className = "player-row";
@@ -661,26 +1260,36 @@
 
         const seatActions = document.createElement("div");
         seatActions.className = "actions";
+
         const seatUp = document.createElement("button");
         seatUp.className = "btn";
         seatUp.textContent = "Seat Up";
         seatUp.disabled = !editable;
-        seatUp.addEventListener("click", () => moveSeat(index, -1));
+        seatUp.addEventListener("click", () => {
+          runLocked(`seat-up-${player.id}`, () => moveSeat(index, -1), 250);
+        });
+
         const seatDown = document.createElement("button");
         seatDown.className = "btn";
         seatDown.textContent = "Seat Down";
         seatDown.disabled = !editable;
-        seatDown.addEventListener("click", () => moveSeat(index, 1));
+        seatDown.addEventListener("click", () => {
+          runLocked(`seat-down-${player.id}`, () => moveSeat(index, 1), 250);
+        });
+
         seatActions.appendChild(seatUp);
         seatActions.appendChild(seatDown);
 
         const removeActions = document.createElement("div");
         removeActions.className = "actions";
+
         const removeButton = document.createElement("button");
         removeButton.className = "btn danger";
         removeButton.textContent = "Remove";
         removeButton.disabled = !editable || gameState.hasStarted;
-        removeButton.addEventListener("click", () => removePlayer(player.id));
+        removeButton.addEventListener("click", () => {
+          runLocked(`remove-player-${player.id}`, () => removePlayer(player.id), 350);
+        });
         removeActions.appendChild(removeButton);
 
         row.appendChild(nameWrap);
@@ -696,10 +1305,13 @@
         container.innerHTML = '<div class="member-row"><div>No room connected yet.</div></div>';
         return;
       }
+
       container.innerHTML = "";
+
       roomState.members.forEach((member) => {
         const row = document.createElement("div");
         row.className = "member-row";
+
         row.innerHTML = `
           <div>
             <div><strong>${escapeHtml(member.name)}</strong>${member.you ? " (You)" : ""}</div>
@@ -707,20 +1319,26 @@
           </div>
           <div class="actions"></div>
         `;
+
         const actions = row.querySelector(".actions");
         if (roomState.role === "admin" && !member.you && member.role !== "admin") {
-          const toggleButton = document.createElement("button");
+          const controlButton = document.createElement("button");
           if (member.role === "viewer") {
-            toggleButton.className = "btn";
-            toggleButton.textContent = "Allow Edit";
-            toggleButton.addEventListener("click", () => updateMemberRole(member.sessionId, "editor"));
+            controlButton.className = "btn";
+            controlButton.textContent = "Give Control";
+            controlButton.addEventListener("click", () => {
+              runLocked(`perm-${member.sessionId}`, () => updateMemberRole(member.sessionId, "editor"), 600);
+            });
           } else {
-            toggleButton.className = "btn alt";
-            toggleButton.textContent = "Read Only";
-            toggleButton.addEventListener("click", () => updateMemberRole(member.sessionId, "viewer"));
+            controlButton.className = "btn alt";
+            controlButton.textContent = "Remove Control";
+            controlButton.addEventListener("click", () => {
+              runLocked(`perm-${member.sessionId}`, () => updateMemberRole(member.sessionId, "viewer"), 600);
+            });
           }
-          actions.appendChild(toggleButton);
+          actions.appendChild(controlButton);
         }
+
         container.appendChild(row);
       });
     }
@@ -733,7 +1351,8 @@
       document.getElementById("dealerLabel").textContent = gameState.hasStarted
         ? `Dealer: ${gameState.players[getDealerIndex()]?.name || "-"}`
         : "Dealer: -";
-      document.getElementById("trumpLabel").textContent = `Trump: ${TRUMPS[gameState.trumpIndex % TRUMPS.length]}`;
+
+      renderSirBadge();
 
       const warnings = [];
       if (!gameState.hasStarted) {
@@ -745,20 +1364,37 @@
           }
         });
       }
-      document.getElementById("warningArea").innerHTML = warnings.map((warning) => `<div class="notice">${escapeHtml(warning)}</div>`).join("");
+
+      document.getElementById("warningArea").innerHTML = warnings
+        .map((warning) => `<div class="notice">${escapeHtml(warning)}</div>`)
+        .join("");
+
       renderPredictionGrid();
       renderWonGrid();
+    }
+
+    function renderSirBadge() {
+      const detail = getCurrentSir();
+      const badge = document.getElementById("sirBadge");
+      badge.innerHTML = `
+        <span class="sir-icon-shell">${getSirIcon(detail)}</span>
+        <span class="sir-copy">
+          <span>Sir: ${escapeHtml(detail.english)}</span>
+          <small>${escapeHtml(detail.local)}</small>
+        </span>
+      `;
     }
 
     function renderPredictionGrid() {
       const editable = canEdit() && gameState.hasStarted && gameState.roundPhase === "bidding";
       const grid = document.getElementById("predictionsGrid");
       grid.innerHTML = "";
+
       gameState.players.forEach((player, index) => {
         const box = document.createElement("div");
         box.className = "score-box";
         box.innerHTML = `
-          <label>${escapeHtml(player.name || `Player ${index + 1}`)}</label>
+          <label class="field-label">${escapeHtml(player.name || `Player ${index + 1}`)}</label>
           <div class="counter">
             <button class="count-btn" ${editable ? "" : "disabled"}>-</button>
             <div class="count-value">${gameState.currentBids[index] || 0}</div>
@@ -770,7 +1406,8 @@
         buttons[1].addEventListener("click", () => changeBid(index, 1));
         grid.appendChild(box);
       });
-      document.getElementById("predictionSum").textContent = `Sum: ${sum(gameState.currentBids)} / ${cardCountText()}`;
+
+      document.getElementById("predictionSum").textContent = `Sum: ${sum(gameState.currentBids)} / ${cardCount}`;
       const confirmButton = document.getElementById("confirmPredictionsBtn");
       confirmButton.style.display = gameState.roundPhase === "bidding" ? "inline-flex" : "none";
       confirmButton.disabled = !editable;
@@ -780,11 +1417,12 @@
       const editable = canEdit() && gameState.hasStarted && gameState.roundPhase === "results";
       const grid = document.getElementById("wonGrid");
       grid.innerHTML = "";
+
       gameState.players.forEach((player, index) => {
         const box = document.createElement("div");
         box.className = "score-box";
         box.innerHTML = `
-          <label>${escapeHtml(player.name || `Player ${index + 1}`)}</label>
+          <label class="field-label">${escapeHtml(player.name || `Player ${index + 1}`)}</label>
           <div class="counter">
             <button class="count-btn" ${editable ? "" : "disabled"}>-</button>
             <div class="count-value">${gameState.currentWon[index] || 0}</div>
@@ -796,8 +1434,9 @@
         buttons[1].addEventListener("click", () => changeWon(index, 1));
         grid.appendChild(box);
       });
+
       document.getElementById("wonSection").style.display = gameState.roundPhase === "results" ? "block" : "none";
-      document.getElementById("wonSum").textContent = `Sum: ${sum(gameState.currentWon)} / ${cardCountText()}`;
+      document.getElementById("wonSum").textContent = `Sum: ${sum(gameState.currentWon)} / ${getCurrentCardCount()}`;
       document.getElementById("closeRoundBtn").disabled = !editable || sum(gameState.currentWon) !== getCurrentCardCount();
     }
 
@@ -807,10 +1446,12 @@
         body.innerHTML = '<tr><td colspan="7">No rounds yet.</td></tr>';
         return;
       }
+
       const totals = computeTotals();
       const streaks = computeStreaks();
       const lastRound = gameState.rounds[gameState.rounds.length - 1];
       const order = totals.map((value, index) => index).sort((a, b) => totals[b] - totals[a]);
+
       body.innerHTML = order.map((index, rank) => `
         <tr>
           <td>${rank + 1}</td>
@@ -830,14 +1471,16 @@
         container.innerHTML = '<div class="history-row">No rounds played yet.</div>';
         return;
       }
+
       container.innerHTML = gameState.rounds.slice(-6).reverse().map((round) => {
         const details = gameState.players
           .map((player, index) => `${player.name || `Player ${index + 1}`}: ${round.bids[index]}/${round.won[index]} (${round.scores[index]})`)
           .join(", ");
+        const sir = getSirByIndex(round.sirIndex || 0);
         return `
           <div class="history-row">
             <strong>Round ${round.roundNumber}</strong>
-            <div>${round.cardCount} cards - ${TRUMPS[round.trumpIndex || 0] || round.trump || "-"}</div>
+            <div>${round.cardCount} cards - Sir: ${escapeHtml(sir.english)} (${escapeHtml(sir.local)})</div>
             <div class="muted">${escapeHtml(details)}</div>
           </div>
         `;
@@ -852,9 +1495,22 @@
         linkBox.textContent = "Create a room to show a QR code and join link.";
         return;
       }
+
       const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(roomState.joinUrl)}`;
       qrArea.innerHTML = `<img src="${qrUrl}" alt="Room QR code">`;
       linkBox.textContent = `${roomState.joinUrl} | Room Code: ${roomState.roomCode}`;
+    }
+
+    function openInfo(key) {
+      const item = RULE_INFO[key];
+      if (!item) return;
+      document.getElementById("infoModalTitle").textContent = item.title;
+      document.getElementById("infoModalBody").textContent = item.body;
+      document.getElementById("infoModal").classList.add("show");
+    }
+
+    function closeInfo() {
+      document.getElementById("infoModal").classList.remove("show");
     }
 
     function commitPlayerNamesFromDom() {
@@ -866,8 +1522,15 @@
 
     function addPlayer() {
       if (!ensureEditable("add players")) return;
-      if (gameState.hasStarted) return showToast("Reset the game to add more players.", "warn");
-      if (gameState.players.length >= 20) return showToast("Maximum 20 players allowed.", "error");
+      if (gameState.hasStarted) {
+        showToast("Reset the game to add more players.", "warn");
+        return;
+      }
+      if (gameState.players.length >= 20) {
+        showToast("Maximum 20 players allowed.", "error");
+        return;
+      }
+
       gameState.players.push({ id: makeId("p"), name: "" });
       syncPlayerArrays(gameState);
       refreshAll();
@@ -875,8 +1538,15 @@
 
     function removePlayer(playerId) {
       if (!ensureEditable("remove players")) return;
-      if (gameState.hasStarted) return showToast("Reset the game to remove players.", "warn");
-      if (gameState.players.length <= 3) return showToast("Minimum 3 players required.", "error");
+      if (gameState.hasStarted) {
+        showToast("Reset the game to remove players.", "warn");
+        return;
+      }
+      if (gameState.players.length <= 3) {
+        showToast("Minimum 3 players required.", "error");
+        return;
+      }
+
       gameState.players = gameState.players.filter((player) => player.id !== playerId);
       syncPlayerArrays(gameState);
       refreshAll();
@@ -886,21 +1556,24 @@
       if (!ensureEditable("change seating order")) return;
       const target = index + step;
       if (target < 0 || target >= gameState.players.length) return;
+
       swap(gameState.players, index, target);
       swap(gameState.currentBids, index, target);
       swap(gameState.currentWon, index, target);
       swap(gameState.streakCounters, index, target);
+
       gameState.rounds.forEach((round) => {
         swap(round.bids, index, target);
         swap(round.won, index, target);
         swap(round.scores, index, target);
       });
+
       refreshAll();
     }
 
     function updateRules() {
       if (!ensureEditable("change rules")) return;
-      gameState.rules.numDecks = parseInt(document.getElementById("numDecks").value, 10) || 1;
+      gameState.rules.numDecks = parseInt(document.getElementById("numDecks").value, 10) === 2 ? 2 : 1;
       gameState.rules.missPenalty = document.getElementById("missPenalty").value;
       gameState.rules.allowEqualPredictions = document.getElementById("allowEqualPredictions").checked;
       gameState.rules.streakBonus = document.getElementById("streakBonus").checked;
@@ -911,19 +1584,30 @@
     function startGame() {
       if (!ensureEditable("start the game")) return;
       commitPlayerNamesFromDom();
+
       const validPlayers = gameState.players
         .map((player) => ({ ...player, name: String(player.name || "").trim() }))
         .filter((player) => player.name);
-      if (validPlayers.length < 3) return showToast("Name at least 3 players before starting.", "error");
+
+      if (validPlayers.length < 3) {
+        showToast("Name at least 3 players before starting.", "error");
+        return;
+      }
+
       const names = validPlayers.map((player) => player.name.toLowerCase());
-      if (new Set(names).size !== names.length) return showToast("Player names must be unique.", "error");
+      if (new Set(names).size !== names.length) {
+        showToast("Player names must be unique.", "error");
+        return;
+      }
+
       gameState.players = validPlayers;
+
       const totalCards = 52 * gameState.rules.numDecks;
       gameState.maxCards = Math.max(1, Math.floor(totalCards / gameState.players.length));
       gameState.roundIndex = 0;
       gameState.currentCardCount = 1;
       gameState.cycleDirection = 1;
-      gameState.trumpIndex = 0;
+      gameState.sirIndex = 0;
       gameState.rounds = [];
       gameState.currentBids = new Array(gameState.players.length).fill(0);
       gameState.currentWon = new Array(gameState.players.length).fill(0);
@@ -931,14 +1615,17 @@
       gameState.hasStarted = true;
       gameState.roundPhase = "bidding";
       gameState.gameEnded = false;
+
       refreshAll();
       showToast("Game started.");
     }
 
     function resetGame() {
       if (!ensureEditable("reset the game")) return;
-      if (!confirm("Reset the game and clear all rounds?")) return;
+      if (!window.confirm("Reset the game and clear all rounds?")) return;
+
       commitPlayerNamesFromDom();
+
       const keepPlayers = gameState.players.map((player) => ({ ...player }));
       const keepRules = { ...gameState.rules };
       gameState = normalizeState({ players: keepPlayers, rules: keepRules });
@@ -948,11 +1635,15 @@
 
     function undoRound() {
       if (!ensureEditable("undo the round")) return;
-      if (!gameState.rounds.length) return showToast("No rounds to undo.", "error");
-      if (!confirm("Undo the last round?")) return;
+      if (!gameState.rounds.length) {
+        showToast("No rounds to undo.", "error");
+        return;
+      }
+      if (!window.confirm("Undo the last round?")) return;
+
       const removed = gameState.rounds.pop();
       gameState.roundIndex = Math.max(0, gameState.roundIndex - 1);
-      gameState.trumpIndex = Math.max(0, gameState.trumpIndex - 1);
+      gameState.sirIndex = Math.max(0, gameState.sirIndex - 1);
       gameState.currentCardCount = removed.cardCount;
       if (gameState.currentCardCount >= gameState.maxCards) gameState.cycleDirection = -1;
       if (gameState.currentCardCount <= 1) gameState.cycleDirection = 1;
@@ -969,9 +1660,11 @@
     function changeBid(index, delta) {
       if (!ensureEditable("change bids")) return;
       if (!gameState.hasStarted || gameState.roundPhase !== "bidding") return;
+
       const cardCount = getCurrentCardCount();
       const dealerIndex = getDealerIndex();
       let next = clamp((gameState.currentBids[index] || 0) + delta, 0, cardCount);
+
       if (!gameState.rules.allowEqualPredictions && index === dealerIndex) {
         const sumOthers = gameState.currentBids.reduce((acc, bid, bidIndex) => bidIndex === index ? acc : acc + bid, 0);
         const forbidden = cardCount - sumOthers;
@@ -983,6 +1676,7 @@
           }
         }
       }
+
       gameState.currentBids[index] = next;
       saveLocalGame();
       renderRound();
@@ -990,10 +1684,15 @@
 
     function confirmPredictions() {
       if (!ensureEditable("confirm predictions")) return;
-      if (!gameState.hasStarted) return showToast("Start the game before entering predictions.", "warn");
-      if (!gameState.rules.allowEqualPredictions && sum(gameState.currentBids) === getCurrentCardCount()) {
-        return showToast("Prediction sum cannot equal total tricks.", "error");
+      if (!gameState.hasStarted) {
+        showToast("Start the game before entering predictions.", "warn");
+        return;
       }
+      if (!gameState.rules.allowEqualPredictions && sum(gameState.currentBids) === getCurrentCardCount()) {
+        showToast("Prediction sum cannot equal total tricks.", "error");
+        return;
+      }
+
       gameState.roundPhase = "results";
       saveLocalGame();
       renderRound();
@@ -1003,6 +1702,7 @@
     function changeWon(index, delta) {
       if (!ensureEditable("change tricks won")) return;
       if (!gameState.hasStarted || gameState.roundPhase !== "results") return;
+
       gameState.currentWon[index] = clamp((gameState.currentWon[index] || 0) + delta, 0, getCurrentCardCount());
       saveLocalGame();
       renderRound();
@@ -1010,15 +1710,22 @@
 
     function closeRound() {
       if (!ensureEditable("close the round")) return;
-      if (!gameState.hasStarted) return showToast("Start the game before closing rounds.", "warn");
+      if (!gameState.hasStarted) {
+        showToast("Start the game before closing rounds.", "warn");
+        return;
+      }
+
       const cardCount = getCurrentCardCount();
       if (sum(gameState.currentWon) !== cardCount) {
-        return showToast("Total tricks won must equal cards dealt.", "error");
+        showToast("Total tricks won must equal cards dealt.", "error");
+        return;
       }
+
       const scores = gameState.players.map((player, index) => {
         const bid = gameState.currentBids[index];
         const won = gameState.currentWon[index];
         let points = 0;
+
         if (bid === won) {
           points = gameState.rules.scoringMode === "alt" ? (bid === 0 ? 10 : 20 + bid) : 10 + won;
           if (gameState.rules.streakBonus) {
@@ -1032,25 +1739,29 @@
           points = gameState.rules.missPenalty === "difference" ? -Math.abs(bid - won) : 0;
           if (gameState.rules.streakBonus) gameState.streakCounters[index] = 0;
         }
+
         return points;
       });
+
       gameState.rounds.push({
         roundNumber: gameState.roundIndex + 1,
         cardCount,
-        trump: TRUMPS[gameState.trumpIndex % TRUMPS.length],
-        trumpIndex: gameState.trumpIndex % TRUMPS.length,
+        sirIndex: getCurrentSirIndex(),
+        sir: getCurrentSir().english,
         bids: [...gameState.currentBids],
         won: [...gameState.currentWon],
         scores
       });
+
       gameState.roundIndex += 1;
-      gameState.trumpIndex += 1;
+      gameState.sirIndex += 1;
       if (gameState.currentCardCount >= gameState.maxCards) gameState.cycleDirection = -1;
       if (gameState.currentCardCount <= 1) gameState.cycleDirection = 1;
       gameState.currentCardCount = clamp(gameState.currentCardCount + gameState.cycleDirection, 1, gameState.maxCards);
       gameState.currentBids = new Array(gameState.players.length).fill(0);
       gameState.currentWon = new Array(gameState.players.length).fill(0);
       gameState.roundPhase = "bidding";
+
       saveLocalGame();
       refreshAll();
       showToast("Round saved.");
@@ -1070,6 +1781,7 @@
       if (gameState.streakCounters.length === gameState.players.length) {
         return gameState.streakCounters.slice();
       }
+
       const streaks = new Array(gameState.players.length).fill(0);
       for (let playerIndex = 0; playerIndex < gameState.players.length; playerIndex++) {
         for (let roundIndex = gameState.rounds.length - 1; roundIndex >= 0; roundIndex--) {
@@ -1084,6 +1796,7 @@
     function rebuildStreaks() {
       gameState.streakCounters = new Array(gameState.players.length).fill(0);
       if (!gameState.rules.streakBonus) return;
+
       gameState.rounds.forEach((round) => {
         round.bids.forEach((bid, index) => {
           if (bid === round.won[index]) {
@@ -1106,8 +1819,25 @@
       return gameState.players.length ? gameState.roundIndex % gameState.players.length : 0;
     }
 
-    function cardCountText() {
-      return getCurrentCardCount();
+    function getCurrentSir() {
+      return getSirByIndex(getCurrentSirIndex());
+    }
+
+    function getCurrentSirIndex() {
+      const step = ((gameState.sirIndex || 0) % SIR_SEQUENCE.length + SIR_SEQUENCE.length) % SIR_SEQUENCE.length;
+      return SIR_SEQUENCE[step];
+    }
+
+    function getSirByIndex(index) {
+      return SIR_DETAILS[((index % SIR_DETAILS.length) + SIR_DETAILS.length) % SIR_DETAILS.length];
+    }
+
+    function getSirIcon(detail) {
+      return `
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="${detail.path}" fill="${detail.color}"></path>
+        </svg>
+      `;
     }
 
     async function loadServerInfo() {
@@ -1130,57 +1860,69 @@
     }
 
     async function createRoom() {
-      if (!roomState.name) return showToast("Add your name before creating a room.", "warn");
-      try {
-        const response = await fetch("/api/rooms", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            sessionId: roomState.sessionId,
-            collaboratorName: roomState.name,
-            gameState
-          })
-        });
-        const snapshot = await readApiResponse(response);
-        if (!response.ok) return showToast(snapshot.error || "Could not create room.", "error");
-        applyRoomSnapshot(snapshot);
-        connectRoomEvents();
-        updateQuery(snapshot.code);
-        showToast(`Room ${snapshot.code} created.`);
-      } catch (error) {
-        console.error("Create room failed:", error);
-        showToast("Could not create room.", "error");
+      if (!roomState.name) {
+        showToast("Add your name before creating a room.", "warn");
+        return;
       }
+
+      const response = await fetch("/api/rooms", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          sessionId: roomState.sessionId,
+          collaboratorName: roomState.name,
+          gameState
+        })
+      });
+
+      const snapshot = await readApiResponse(response);
+      if (!response.ok) {
+        showToast(snapshot.error || "Could not create room.", "error");
+        return;
+      }
+
+      applyRoomSnapshot(snapshot);
+      connectRoomEvents();
+      updateQuery(snapshot.code);
+      showToast(`Room ${snapshot.code} created.`);
     }
 
     async function joinRoom() {
       const code = document.getElementById("roomCode").value.trim().toUpperCase();
-      if (!code) return showToast("Enter a room code.", "warn");
-      if (!roomState.name) return showToast("Add your name before joining.", "warn");
-      try {
-        const response = await fetch(`/api/rooms/${code}/join`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            sessionId: roomState.sessionId,
-            collaboratorName: roomState.name
-          })
-        });
-        const snapshot = await readApiResponse(response);
-        if (!response.ok) return showToast(snapshot.error || "Could not join room.", "error");
-        applyRoomSnapshot(snapshot);
-        connectRoomEvents();
-        updateQuery(snapshot.code);
-        showToast(`Joined room ${snapshot.code}.`);
-      } catch (error) {
-        console.error("Join room failed:", error);
-        showToast("Could not join room.", "error");
+      if (!code) {
+        showToast("Enter a room code.", "warn");
+        return;
       }
+      if (!roomState.name) {
+        showToast("Add your name before joining.", "warn");
+        return;
+      }
+
+      const response = await fetch(`/api/rooms/${code}/join`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          sessionId: roomState.sessionId,
+          collaboratorName: roomState.name
+        })
+      });
+
+      const snapshot = await readApiResponse(response);
+      if (!response.ok) {
+        showToast(snapshot.error || "Could not join room.", "error");
+        return;
+      }
+
+      applyRoomSnapshot(snapshot);
+      connectRoomEvents();
+      updateQuery(snapshot.code);
+      showToast(`Joined room ${snapshot.code}.`);
     }
 
     async function leaveRoom() {
       if (!roomState.roomCode) return;
       const code = roomState.roomCode;
+
       try {
         await fetch(`/api/rooms/${code}/leave`, {
           method: "POST",
@@ -1190,6 +1932,7 @@
       } catch (error) {
         console.warn("Leave room failed:", error);
       }
+
       disconnectRoom();
       roomState.roomCode = null;
       roomState.joinUrl = "";
@@ -1217,15 +1960,18 @@
     function connectRoomEvents() {
       disconnectRoom();
       if (!roomState.roomCode) return;
+
       const params = new URLSearchParams({
         sessionId: roomState.sessionId,
         name: roomState.name || "Guest"
       });
       const source = new EventSource(`/api/rooms/${roomState.roomCode}/events?${params.toString()}`);
       roomState.eventSource = source;
+
       source.addEventListener("room", (event) => {
         applyRoomSnapshot(JSON.parse(event.data));
       });
+
       source.onerror = () => {
         if (roomState.eventSource === source) {
           roomState.eventSource.close();
@@ -1234,6 +1980,7 @@
         clearTimeout(roomState.reconnectTimer);
         roomState.reconnectTimer = setTimeout(connectRoomEvents, 2000);
       };
+
       roomState.presenceTimer = setInterval(sendPresence, 15000);
     }
 
@@ -1255,24 +2002,25 @@
 
     async function updateMemberRole(targetSessionId, role) {
       if (roomState.role !== "admin") return;
-      try {
-        const response = await fetch(`/api/rooms/${roomState.roomCode}/permissions`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            sessionId: roomState.sessionId,
-            collaboratorName: roomState.name,
-            targetSessionId,
-            role
-          })
-        });
-        const snapshot = await readApiResponse(response);
-        if (!response.ok) return showToast(snapshot.error || "Could not update permission.", "error");
-        applyRoomSnapshot(snapshot);
-      } catch (error) {
-        console.error("Permission update failed:", error);
-        showToast("Could not update permission.", "error");
+
+      const response = await fetch(`/api/rooms/${roomState.roomCode}/permissions`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          sessionId: roomState.sessionId,
+          collaboratorName: roomState.name,
+          targetSessionId,
+          role
+        })
+      });
+
+      const snapshot = await readApiResponse(response);
+      if (!response.ok) {
+        showToast(snapshot.error || "Could not update permission.", "error");
+        return;
       }
+
+      applyRoomSnapshot(snapshot);
     }
 
     function applyRoomSnapshot(snapshot) {
@@ -1283,6 +2031,7 @@
       roomState.joinUrl = buildJoinUrl(snapshot.code);
       document.getElementById("roomCode").value = snapshot.code;
       roomState.applyingRemote = true;
+
       try {
         if (snapshot.gameState) {
           gameState = normalizeState(snapshot.gameState);
@@ -1297,28 +2046,29 @@
     function queueSync() {
       if (!roomState.roomCode || !roomState.canEdit || roomState.applyingRemote) return;
       clearTimeout(roomState.syncTimer);
-      roomState.syncTimer = setTimeout(pushStateToRoom, 150);
+      roomState.syncTimer = setTimeout(pushStateToRoom, 160);
     }
 
     async function pushStateToRoom() {
       if (!roomState.roomCode || !roomState.canEdit) return;
-      try {
-        const response = await fetch(`/api/rooms/${roomState.roomCode}/update`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            sessionId: roomState.sessionId,
-            collaboratorName: roomState.name,
-            gameState
-          })
-        });
-        const snapshot = await readApiResponse(response);
-        if (!response.ok) return showToast(snapshot.error || "Could not sync room.", "error");
-        applyRoomSnapshot(snapshot);
-      } catch (error) {
-        console.error("Room sync failed:", error);
-        showToast("Could not sync room.", "error");
+
+      const response = await fetch(`/api/rooms/${roomState.roomCode}/update`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          sessionId: roomState.sessionId,
+          collaboratorName: roomState.name,
+          gameState
+        })
+      });
+
+      const snapshot = await readApiResponse(response);
+      if (!response.ok) {
+        showToast(snapshot.error || "Could not sync room.", "error");
+        return;
       }
+
+      applyRoomSnapshot(snapshot);
     }
 
     async function readApiResponse(response) {
