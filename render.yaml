@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: judgement
+    env: node
+    plan: free
+    buildCommand: ""
+    startCommand: "node server.js"
+    healthCheckPath: "/api/health"
+    autoDeploy: true
